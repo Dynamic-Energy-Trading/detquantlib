@@ -1,29 +1,6 @@
-# [Project name]
+# DET Quant Library
 
-## Setup
-
-1. In the terminal, run the project init script:
-
-    ```cmd
-    python init PROJECT_NAME
-
-    # eg: python init Nomination-Package
-    ```
-  
-2. In the terminal, update the Poetry .lock file:
-
-    ```cmd
-    poetry update
-    ```
-  
-3. Update description and authors in `pyproject.toml`. For authors, provide both the name and the
-DET email address. Example: `authors = ["John Doe <j.doe@det.nl>"]`.
-4. Update the `README.md` file:
-   - Replace the top header ("[Project name]") with the model name
-   - Provide the high-level purpose of the model
-   - Delete the "Setup" section (the "Development settings" section can be left unchanged)
-
-Before any coding, merge all changes from steps 1-4 in a single, dedicated pull request.
+An internal library containing functions and classes that can be used across Quant models.
 
 ## Development settings
 
