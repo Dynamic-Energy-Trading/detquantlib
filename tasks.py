@@ -15,11 +15,10 @@ from invoke.runners import Result
 
 # Project related paths
 ROOT_DIR = pathlib.Path(__file__).parent
-MODEL_ENTRY_FILE = ROOT_DIR.joinpath("run.py")
-SOURCE_DIR = ROOT_DIR.joinpath("src/")
+SOURCE_DIR = ROOT_DIR.joinpath("detquantlib/")
 TEST_DIR = ROOT_DIR.joinpath("tests/")
 README_DIR = ROOT_DIR.joinpath("README.md")
-PYTHON_TARGETS = [MODEL_ENTRY_FILE, SOURCE_DIR, TEST_DIR]  # directories containing .py files
+PYTHON_TARGETS = [SOURCE_DIR, TEST_DIR]  # directories containing .py files
 PYTHON_TARGETS_STR = " ".join([str(p) for p in PYTHON_TARGETS])
 
 
