@@ -6,13 +6,14 @@ authors = ["Bima Malabonga <b.malabonga@det.nl>"]
 readme = "README.md"
 repository = "https://github.com/Dynamic-Energy-Trading/detquantlib"
 packages = [
-    { include = "src" }, # Specifies the location of the package
+    { include = "detquantlib" }, # Specifies the location of the package
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<4.0"
+python = ">=3.10,<4.0"
 
 [tool.poetry.group.dev.dependencies]
+toml = "^0.10.2"
 invoke = "^2.2.0"
 pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
