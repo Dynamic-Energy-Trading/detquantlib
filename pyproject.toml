@@ -20,7 +20,7 @@ black = "^24.10.0"
 darglint = "^1.8.1"
 isort = "^5.13.2"
 colorama = "^0.4.6"
-pymarkdownlnt = "^0.9.26"
+pymarkdownlnt = "^0.9.29"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
