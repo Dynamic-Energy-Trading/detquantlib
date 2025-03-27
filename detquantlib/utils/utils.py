@@ -9,4 +9,3 @@ def add_log(message: str):
         message: Message to be printed
     """
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
-    
