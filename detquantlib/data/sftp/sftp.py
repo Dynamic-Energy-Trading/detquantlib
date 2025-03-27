@@ -68,7 +68,7 @@ class Sftp:
         self.sftp_session.close()
         self.transport.close()
 
-    def get_file(self, remote_dir, local_dir):
+    def get_file(self, remote_dir: str, local_dir: str):
         """
         Imports a file from an SFTP server to a local directory.
 
@@ -78,7 +78,7 @@ class Sftp:
         """
         self.sftp_session.get(remote_dir, local_dir)
 
-    def put_file(self, local_dir, remote_dir):
+    def put_file(self, local_dir: str, remote_dir: str):
         """
         Exports a file from a local directory to an SFTP server.
 
