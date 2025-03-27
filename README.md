@@ -20,7 +20,8 @@ Release notes:
 
 - When deemed necessary (especially in case of major updates), developers can document code
   changes in dedicated GitHub release notes.
-- Release notes can be created via https://github.com/Dynamic-Energy-Trading/detquantlib/releases.
+- Release notes can be created via
+  <https://github.com/Dynamic-Energy-Trading/detquantlib/releases.>
 - In any case, all codes changes should always be properly described/documented in GitHub
   issues and/or pull requests.
 
