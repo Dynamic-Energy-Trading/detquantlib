@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "detquantlib"
-version = "1.0.1"
+version = "1.0.2"
 description = "An internal library containing functions and classes that can be used across Quant models."
 authors = ["Bima Malabonga <b.malabonga@det.nl>"]
 readme = "README.md"
@@ -22,7 +22,7 @@ toml = "^0.10.2"
 invoke = "^2.2.0"
 pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
-black = "^24.10.0"
+black = "^25.1.0"
 darglint = "^1.8.1"
 isort = "^6.0.1"
 colorama = "^0.4.6"
