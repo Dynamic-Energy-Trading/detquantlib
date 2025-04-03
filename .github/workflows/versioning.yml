@@ -70,7 +70,7 @@ jobs:
             echo "No Git tags found!"
             exit 1
           fi
-          echo "Found latest tag LATEST_TAG"
+          echo "Found latest tag $LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
       - name: Validate version increment
