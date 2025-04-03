@@ -84,7 +84,7 @@ jobs:
 
           if [ "$NEW_MAJOR" -eq $((OLD_MAJOR + 1)) ] && [ "$NEW_MINOR" -eq 0 ] && [ "$NEW_PATCH" -eq 0 ]; then
             echo "Valid major version increment (v$OLD_VERSION -> v$NEW_VERSION)."
-          elif [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "NEW_MINOR" -eq $((OLD_MINOR + 1)) ] && [ "$NEW_PATCH" -eq 0 ]; then
+          elif [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "$NEW_MINOR" -eq $((OLD_MINOR + 1)) ] && ["$NEW_PATCH" -eq 0 ]; then
             echo "Valid minor version increment (v$OLD_VERSION -> v$NEW_VERSION)."
           elif [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "$NEW_MINOR" -eq "$OLD_MINOR" ] && [ "$NEW_PATCH" -eq $((OLD_PATCH + 1)) ]; then
             echo "Valid patch version increment (v$OLD_VERSION -> v$NEW_VERSION)."
