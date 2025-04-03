@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "detquantlib"
-version = "1.0.2"
+version = "1.0.3"
 description = "An internal library containing functions and classes that can be used across Quant models."
 authors = ["Bima Malabonga <b.malabonga@det.nl>"]
 readme = "README.md"
@@ -46,3 +46,4 @@ line-length = 99
 [tool.pymarkdown]
 plugins.md013.enabled = false # Disable line length requirements
 plugins.md040.enabled = false # Disable fenced code blocks language requirements
+plugins.md001.enabled = false # Disable one-level increments contraint in headings
