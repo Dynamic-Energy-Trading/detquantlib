@@ -103,6 +103,10 @@ class DetDatabase:
 
         Returns:
             Dataframe containing day-ahead spot prices
+
+        Raises:
+            ValueError: Raises an error when input arguments 'columns' and 'process_data' are
+                not compatible
         """
         # Input validation
         if process_data and columns is not None:
@@ -243,6 +247,10 @@ class DetDatabase:
 
         Returns:
             Dataframe containing imbalance prices
+
+        Raises:
+            ValueError: Raises an error when input arguments 'columns' and 'process_data' are
+                not compatible
         """
         # Input validation
         if process_data and columns is not None:
@@ -439,7 +447,7 @@ class DetDatabase:
 
 class DetDatabaseDefinitions:
     """A class containing some hard-coded definitions related to the DET database."""
-    
+
     DEFINITIONS = dict(
         driver="{ODBC Driver 18 for SQL Server}",
         table_name_entsoe_day_ahead_spot_price="[ENTSOE].[DayAheadSpotPrice]",
