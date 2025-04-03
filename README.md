@@ -5,7 +5,7 @@ across Quant models.
 
 ## Instructions
 
-Version control:
+#### Version control:
 
 - This repository contains a version control workflow.
 - The version number is specified via the `version` field in the pyproject.toml file.
@@ -16,7 +16,7 @@ Version control:
   - `Y` increments represent minor, backward compatible functionality updates.
   - `Z` increments represent patch/bugfix, backward compatible updates.
 
-Release notes:
+#### Release notes:
 
 - When deemed necessary (especially in case of major updates), developers can document code
   changes in dedicated GitHub release notes.
@@ -25,13 +25,15 @@ Release notes:
 - In any case, all codes changes should always be properly described/documented in GitHub
   issues and/or pull requests.
 
-Installing the `detquantlib` package in other Python projects:
+#### Installing the `detquantlib` package in other Python projects:
 
- - To install the library in another project, use the following poetry command:
-  ```
-  poetry add git+https://github.com/Dynamic-Energy-Trading/detquantlib#vX.Y.Z
-  ```
-  where `vX.Y.Z` should be replaced with the relevant version (e.g. `v1.2.3`).
+To install the library in another project, use the following poetry command:
+
+```
+poetry add git+https://github.com/Dynamic-Energy-Trading/detquantlib#vX.Y.Z
+```
+
+where `vX.Y.Z` should be replaced with the relevant version (e.g. `v1.2.3`).
 
 ## Development settings
 
