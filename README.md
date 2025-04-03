@@ -5,7 +5,7 @@ across Quant models.
 
 ## Instructions
 
-#### Version control:
+#### Version control
 
 - This repository contains a version control workflow.
 - The version number is specified via the `version` field in the pyproject.toml file.
@@ -16,7 +16,7 @@ across Quant models.
   - `Y` increments represent minor, backward compatible functionality updates.
   - `Z` increments represent patch/bugfix, backward compatible updates.
 
-#### Release notes:
+#### Release notes
 
 - When deemed necessary (especially in case of major updates), developers can document code
   changes in dedicated GitHub release notes.
@@ -25,7 +25,7 @@ across Quant models.
 - In any case, all codes changes should always be properly described/documented in GitHub
   issues and/or pull requests.
 
-#### Installing the `detquantlib` package in other Python projects:
+#### Installing the `detquantlib` package in other Python projects
 
 To install the library in another project, use the following poetry command:
 
