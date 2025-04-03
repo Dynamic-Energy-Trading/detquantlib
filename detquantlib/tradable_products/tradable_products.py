@@ -3,8 +3,8 @@ from datetime import datetime
 from typing import Literal
 
 # Third-party packages
-from dateutil.relativedelta import *
 import pandas as pd
+from dateutil.relativedelta import *
 from detquantlib.dates.dates import calc_months_diff
 
 
@@ -24,6 +24,10 @@ def convert_delivery_start_date_to_maturity(
 
     Returns:
         Product maturity
+
+    Raises:
+        ValueError: Raises an error when the delivery start date is older than the trading date
+        ValueError: Raises an error when the input product type is not recognized
     """
     # Make input product string lower case only
     product = product.lower()
@@ -68,9 +72,9 @@ def convert_delivery_start_date_to_maturity(
 
 
 def convert_maturity_to_delivery_start_date(
-        trading_date: datetime,
-        maturity: int,
-        product: Literal["month", "quarter", "year"],
+    trading_date: datetime,
+    maturity: int,
+    product: Literal["month", "quarter", "year"],
 ) -> datetime:
     """
     Calculates the delivery start date of the input product, based on the input trading date
@@ -83,6 +87,9 @@ def convert_maturity_to_delivery_start_date(
 
     Returns:
         Delivery start date
+
+    Raises:
+        ValueError: Raises an error when the input product type is not recognized
     """
 
     # Make input product string lower case only
