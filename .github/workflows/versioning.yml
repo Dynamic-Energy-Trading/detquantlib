@@ -62,6 +62,36 @@ jobs:
           echo "Error: Tag v${{ env.VERSION }} already exists! Please update the package version in file pyproject.toml."
           exit 1
 
+      - name: Get latest Git tag
+        id: get_latest_tag
+        run: |
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 | sed 's/^v//')
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No Git tags found!"
+            exit 1
+          fi
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+
+      - name: Validate version increment
+        id: check_version_increment
+        run: |
+          NEW_VERSION=${{ env.VERSION }}
+          OLD_VERSION=${{ env.LATEST_TAG }}
+
+          IFS='.' read -r OLD_MAJOR OLD_MINOR OLD_PATCH <<< "$OLD_VERSION"
+          IFS='.' read -r NEW_MAJOR NEW_MINOR NEW_PATCH <<< "$NEW_VERSION"
+
+          if [ "$NEW_MAJOR" -gt "$OLD_MAJOR" ] && [ "$NEW_MINOR" -eq 0 ] && [ "$NEW_PATCH" -eq 0 ]; then
+            echo "Valid major version increment"
+          elif [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "$NEW_MINOR" -gt "$OLD_MINOR" ] && [ "$NEW_PATCH" -eq 0 ]; then
+            echo "Valid minor version increment"
+          elif [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "$NEW_MINOR" -eq "$OLD_MINOR" ] && [ "$NEW_PATCH" -gt "$OLD_PATCH" ]; then
+            echo "Valid patch version increment"
+          else
+            echo "❌ Invalid version increment! New version ($NEW_VERSION) must be one step ahead of old version ($OLD_VERSION)."
+            exit 1
+          fi
+
       - name: Create and push tag
         # Only create tag if workflow is triggered by push to master, not if it is triggered by
         # a pull request.
