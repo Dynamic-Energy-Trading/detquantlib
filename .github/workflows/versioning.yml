@@ -49,10 +49,10 @@ jobs:
         id: check_tag
         run: |
           if git rev-parse refs/tags/v${{ env.VERSION }} >/dev/null 2>&1; then
-            echo "Tag v${{ env.VERSION }} exists"
+            echo "Tag v${{ env.VERSION }} exists."
             echo "EXISTS=true" >> $GITHUB_ENV
           else
-            echo "Tag v${{ env.VERSION }} does not exist"
+            echo "Tag v${{ env.VERSION }} does not exist."
             echo "EXISTS=false" >> $GITHUB_ENV
           fi
 
@@ -70,6 +70,7 @@ jobs:
             echo "No Git tags found!"
             exit 1
           fi
+          echo "Found latest tag LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
       - name: Validate version increment
