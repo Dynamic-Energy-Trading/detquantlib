@@ -24,7 +24,7 @@ class Entsoe:
         return "/TP_export/EnergyPrices_12.1.D_r3/"
 
     @staticmethod
-    def get_sftp_filename_day_ahead_spot_prices(year: int, month: int):
+    def get_sftp_filename_day_ahead_spot_prices(year: int, month: int) -> str:
         """
         Name of SFTP files containing day-ahead spot prices.
 
@@ -67,7 +67,7 @@ class Entsoe:
         year: int,
         month: int,
         local_folder_dir: str,
-    ):
+    ) -> pd.DataFrame:
         """
         Reads and processes the content of the file containing day-ahead spot prices for a given
         delivery month.
@@ -109,7 +109,7 @@ class Entsoe:
 
     def get_day_ahead_spot_prices_from_sftp(
         self, country: str, timezone: str, year: int, month: int, keep_local_file: bool = False
-    ):
+    ) -> pd.DataFrame:
         """
         Main method to fetch and process day-ahead spot price data from the ENSTOE SFTP server.
 

@@ -7,7 +7,8 @@ import plotly.io as pio
 
 
 def get_default_plotly_folder_dir():
-    Path.cwd().joinpath("Outputs", "PlotlyFigures")
+    # Default path to output folder containing plotly figures.
+    return Path.cwd().joinpath("Outputs", "PlotlyFigures")
 
 
 def set_standard_layout(fig: go.Figure) -> go.Figure:
