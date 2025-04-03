@@ -1,6 +1,29 @@
 # DET Quant Library
 
-An internal library containing functions and classes that can be used across Quant models.
+The DET Quant Library is an internal library containing functions and classes that can be used
+across Quant models.
+
+## Instructions
+
+Version control:
+
+- This repository contains a version control workflow.
+- The version number is specified via the `version` field in the pyproject.toml file.
+- The version number needs to be updated with every new master commit. If the version is not
+  updated, the GitHub workflow will fail.
+- Version numbers should follow semantic versioning (i.e. `X.Y.Z`). That is:
+  - `X` increments represent major, non-backward compatible updates.
+  - `Y` increments represent minor, backward compatible functionality updates.
+  - `Z` increments represent patch/bugfix, backward compatible updates.
+
+Release notes:
+
+- When deemed necessary (especially in case of major updates), developers can document code
+  changes in dedicated GitHub release notes.
+- Release notes can be created via
+  <https://github.com/Dynamic-Energy-Trading/detquantlib/releases.>
+- In any case, all codes changes should always be properly described/documented in GitHub
+  issues and/or pull requests.
 
 ## Development settings
 
