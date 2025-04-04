@@ -64,7 +64,7 @@ jobs:
             exit 1
           else
             echo "EXISTS=false" >> $GITHUB_ENV
-            echo "Tag v${{ env.VERSION }} does not exist."
+            echo "✅ Tag v${{ env.VERSION }} does not exist."
           fi
 
       - name: Get latest Git tag on master branch
@@ -72,10 +72,10 @@ jobs:
         run: |
           LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 | sed 's/^v//')
           if [ -z "$LATEST_TAG" ]; then
-            echo "No Git tags found on master branch!"
+            echo "❌ No Git tags found on master branch!"
             exit 1
           fi
-          echo "Found latest Git tag v$LATEST_TAG on master branch."
+          echo "Latest Git tag on master branch: v$LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
       - name: Validate version increment
@@ -88,11 +88,11 @@ jobs:
           IFS='.' read -r NEW_MAJOR NEW_MINOR NEW_PATCH <<< "$NEW_VERSION"
 
           if [ "$NEW_MAJOR" -eq $((OLD_MAJOR + 1)) ] && [ "$NEW_MINOR" -eq 0 ] && [ "$NEW_PATCH" -eq 0 ]; then
-            echo "Valid major version increment (v$OLD_VERSION -> v$NEW_VERSION)."
+            echo "✅ Valid major version increment (v$OLD_VERSION -> v$NEW_VERSION)."
           elif [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "$NEW_MINOR" -eq $((OLD_MINOR + 1)) ] && [ "$NEW_PATCH" -eq 0 ]; then
-            echo "Valid minor version increment (v$OLD_VERSION -> v$NEW_VERSION)."
+            echo "✅ Valid minor version increment (v$OLD_VERSION -> v$NEW_VERSION)."
           elif [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "$NEW_MINOR" -eq "$OLD_MINOR" ] && [ "$NEW_PATCH" -eq $((OLD_PATCH + 1)) ]; then
-            echo "Valid patch version increment (v$OLD_VERSION -> v$NEW_VERSION)."
+            echo "✅ Valid patch version increment (v$OLD_VERSION -> v$NEW_VERSION)."
           else
             echo "❌ Invalid version increment! New version ($NEW_VERSION) must be one step ahead of old version ($OLD_VERSION)."
             exit 1
