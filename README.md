@@ -30,7 +30,7 @@ across Quant models.
 To install the library in another project, use the following poetry command:
 
 ```
-poetry add git+https://github.com/Dynamic-Energy-Trading/detquantlib#vX.Y.Z
+poetry add git+https://github.com/Dynamic-Energy-Trading/detquantlib.git@vX.Y.Z
 ```
 
 where `vX.Y.Z` should be replaced with the relevant version (e.g. `v1.2.3`).

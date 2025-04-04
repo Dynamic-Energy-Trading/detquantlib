@@ -68,12 +68,22 @@ class DetDatabase:
 
         Returns:
             Dataframe containing the queried data
+
+        Raises:
+            Exception: Raises an error if the SQL query fails
         """
         with warnings.catch_warnings():
             # Pandas UserWarning returned when using pandas with pyodbc. Disable warning
             # temporarily for the SQL query.
             warnings.simplefilter("ignore", category=UserWarning)
-            df = pd.read_sql(query, self.connection)
+
+            try:
+                df = pd.read_sql(query, self.connection)
+            except Exception as e:
+                # If query fails, close connection before raising the error
+                self.close_connection()
+                raise
+
         return df
 
     def load_entsoe_day_ahead_spot_prices(
