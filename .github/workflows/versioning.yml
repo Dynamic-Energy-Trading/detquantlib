@@ -45,32 +45,37 @@ jobs:
           VERSION=$(poetry run python -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])")
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Check if tag exists
-        id: check_tag
+      - name: Validate version format (Semantic Versioning)
         run: |
-          if git rev-parse refs/tags/v${{ env.VERSION }} >/dev/null 2>&1; then
-            echo "Tag v${{ env.VERSION }} exists."
-            echo "EXISTS=true" >> $GITHUB_ENV
+          VERSION=${{ env.VERSION }}
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format: $VERSION. Expected format: MAJOR.MINOR.PATCH"
+            exit 1
           else
-            echo "Tag v${{ env.VERSION }} does not exist."
-            echo "EXISTS=false" >> $GITHUB_ENV
+            echo "✅ Version format is valid: $VERSION"
           fi
 
-      - name: Fail workflow if tag already exists
-        if: env.EXISTS == 'true'
+      - name: Check if tag already exists
+        id: check_new_tag
         run: |
-          echo "Error: Tag v${{ env.VERSION }} already exists! Please update the package version in file pyproject.toml."
-          exit 1
+          if git rev-parse refs/tags/v${{ env.VERSION }} >/dev/null 2>&1; then
+            echo "EXISTS=true" >> $GITHUB_ENV
+            echo "Error: Tag v${{ env.VERSION }} already exists! Please update the package version in file pyproject.toml."
+            exit 1
+          else
+            echo "EXISTS=false" >> $GITHUB_ENV
+            echo "✅ Tag v${{ env.VERSION }} does not exist."
+          fi
 
       - name: Get latest Git tag on master branch
         id: get_latest_tag
         run: |
           LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 | sed 's/^v//')
           if [ -z "$LATEST_TAG" ]; then
-            echo "No Git tags found on master branch!"
+            echo "❌ No Git tags found on master branch!"
             exit 1
           fi
-          echo "Found latest Git tag v$LATEST_TAG on master branch."
+          echo "Latest Git tag on master branch: v$LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
       - name: Validate version increment
@@ -83,11 +88,11 @@ jobs:
           IFS='.' read -r NEW_MAJOR NEW_MINOR NEW_PATCH <<< "$NEW_VERSION"
 
           if [ "$NEW_MAJOR" -eq $((OLD_MAJOR + 1)) ] && [ "$NEW_MINOR" -eq 0 ] && [ "$NEW_PATCH" -eq 0 ]; then
-            echo "Valid major version increment (v$OLD_VERSION -> v$NEW_VERSION)."
+            echo "✅ Valid major version increment (v$OLD_VERSION -> v$NEW_VERSION)."
           elif [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "$NEW_MINOR" -eq $((OLD_MINOR + 1)) ] && [ "$NEW_PATCH" -eq 0 ]; then
-            echo "Valid minor version increment (v$OLD_VERSION -> v$NEW_VERSION)."
+            echo "✅ Valid minor version increment (v$OLD_VERSION -> v$NEW_VERSION)."
           elif [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "$NEW_MINOR" -eq "$OLD_MINOR" ] && [ "$NEW_PATCH" -eq $((OLD_PATCH + 1)) ]; then
-            echo "Valid patch version increment (v$OLD_VERSION -> v$NEW_VERSION)."
+            echo "✅ Valid patch version increment (v$OLD_VERSION -> v$NEW_VERSION)."
           else
             echo "❌ Invalid version increment! New version ($NEW_VERSION) must be one step ahead of old version ($OLD_VERSION)."
             exit 1
