@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "detquantlib"
-version = "2.0.2"
+version = "2.0.3"
 description = "An internal library containing functions and classes that can be used across Quant models."
 authors = ["DET"]
 readme = "README.md"
