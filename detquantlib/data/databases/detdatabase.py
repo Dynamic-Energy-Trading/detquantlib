@@ -115,6 +115,8 @@ class DetDatabase:
         Raises:
             ValueError: Raises an error when input arguments 'columns' and 'process_data' are
                 not compatible
+            ValueError: Raises an error when the combination of trading dates and delivery dates
+                is not valid.
         """
         # Input validation
         if process_data and columns is not None:
@@ -292,6 +294,8 @@ class DetDatabase:
         Raises:
             ValueError: Raises an error when input arguments 'columns' and 'process_data' are
                 not compatible
+            ValueError: Raises an error when the combination of trading dates and delivery dates
+                is not valid.
         """
         # Input validation
         if process_data and columns is not None:
