@@ -1,8 +1,6 @@
-name: Versioning and Tagging
+name: Version and Tag
 
 on:
-  push:
-    branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 
@@ -97,13 +95,3 @@ jobs:
             echo "❌ Invalid version increment! New version ($NEW_VERSION) must be one step ahead of old version ($OLD_VERSION)."
             exit 1
           fi
-
-      - name: Create and push tag
-        # Only create tag if workflow is triggered by push to master, not if it is triggered by
-        # a pull request.
-        if: github.event_name == 'push' && env.EXISTS == 'false'
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a v${{ env.VERSION }} -m "Release v${{ env.VERSION }}"
-          git push origin v${{ env.VERSION }}
