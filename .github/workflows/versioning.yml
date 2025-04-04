@@ -55,22 +55,17 @@ jobs:
             echo "✅ Version format is valid: $VERSION"
           fi
 
-      - name: Check if tag exists
-        id: check_tag
+      - name: Check if tag already exists
+        id: check_new_tag
         run: |
           if git rev-parse refs/tags/v${{ env.VERSION }} >/dev/null 2>&1; then
-            echo "Tag v${{ env.VERSION }} exists."
             echo "EXISTS=true" >> $GITHUB_ENV
+            echo "Error: Tag v${{ env.VERSION }} already exists! Please update the package version in file pyproject.toml."
+            exit 1
           else
-            echo "Tag v${{ env.VERSION }} does not exist."
             echo "EXISTS=false" >> $GITHUB_ENV
+            echo "Tag v${{ env.VERSION }} does not exist."
           fi
-
-      - name: Fail workflow if tag already exists
-        if: env.EXISTS == 'true'
-        run: |
-          echo "Error: Tag v${{ env.VERSION }} already exists! Please update the package version in file pyproject.toml."
-          exit 1
 
       - name: Get latest Git tag on master branch
         id: get_latest_tag
