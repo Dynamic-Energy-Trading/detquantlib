@@ -45,6 +45,16 @@ jobs:
           VERSION=$(poetry run python -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])")
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
+      - name: Validate version format (Semantic Versioning)
+        run: |
+          VERSION=${{ env.VERSION }}
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format: $VERSION. Expected format: MAJOR.MINOR.PATCH"
+            exit 1
+          else
+            echo "✅ Version format is valid: $VERSION"
+          fi
+
       - name: Check if tag exists
         id: check_tag
         run: |
