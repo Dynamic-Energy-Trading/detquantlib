@@ -68,6 +68,9 @@ class DetDatabase:
 
         Returns:
             Dataframe containing the queried data
+
+        Raises:
+            Exception: Raises an error if the SQL query fails
         """
         with warnings.catch_warnings():
             # Pandas UserWarning returned when using pandas with pyodbc. Disable warning
