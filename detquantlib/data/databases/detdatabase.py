@@ -79,9 +79,11 @@ class DetDatabase:
     def load_entsoe_day_ahead_spot_prices(
         self,
         map_code: str,
-        start_date: datetime,
-        end_date: datetime,
         timezone: str,
+        start_trading_date: datetime = None,
+        end_trading_date: datetime = None,
+        start_delivery_date: datetime = None,
+        end_delivery_date: datetime = None,
         columns: list = None,
         process_data: bool = True,
     ) -> pd.DataFrame:
@@ -90,10 +92,16 @@ class DetDatabase:
 
         Args:
             map_code: Map code of the power country/region
-            start_date: Delivery start date. The start datetime is included in the filtering
-                (i.e. delivery dates >= start_date).
-            end_date: Delivery end date. The end datetime is excluded from the filtering
+            start_trading_date: Start trading date
+            end_trading_date: End trading date
+                Note: The user should provide either 'start_trading_date' and 'end_trading_date',
+                or 'start_delivery_date' and 'end_delivery_date'.
+            start_delivery_date: Delivery start date. The start datetime is included in the
+                filtering (i.e. delivery dates >= start_date).
+            end_delivery_date: Delivery end date. The end datetime is excluded from the filtering
                 (i.e. delivery dates < end_date).
+                Note: The user should provide either 'start_trading_date' and 'end_trading_date',
+                or 'start_delivery_date' and 'end_delivery_date'.
             timezone: Timezone of the power country/region. This argument is important because
                 ENTSOE provides all prices in the UTC timezone. We first convert the dates from
                 UTC to the local timezone, and then filter for the requested delivery period.
@@ -107,12 +115,29 @@ class DetDatabase:
         Raises:
             ValueError: Raises an error when input arguments 'columns' and 'process_data' are
                 not compatible
+            ValueError: Raises an error when the combination of trading dates and delivery dates
+                is not valid.
         """
         # Input validation
         if process_data and columns is not None:
             raise ValueError(
                 "Input argument 'process_data' can only be true if input argument 'columns' "
                 "is None."
+            )
+        if not (
+            start_trading_date is not None
+            and end_trading_date is not None
+            and start_delivery_date is None
+            and end_delivery_date is None
+        ) and not (
+            start_trading_date is None
+            and end_trading_date is None
+            and start_delivery_date is not None
+            and end_delivery_date is not None
+        ):
+            raise ValueError(
+                "Either 'start_trading_date' and 'end_trading_date', or 'start_delivery_date' "
+                "and 'end_delivery_date' should be provided."
             )
 
         # Set default column values
@@ -129,15 +154,25 @@ class DetDatabase:
         else:
             columns_str = f"[{'], ['.join(columns)}]"
 
-        # Convert start date to UTC and string
-        start_date = start_date.replace(tzinfo=ZoneInfo(timezone))
-        start_date = start_date.astimezone(ZoneInfo("UTC"))
-        start_date_str = start_date.strftime("%Y-%m-%d %H:%M:%S")
+        # Convert start trading date to start delivery date
+        if start_trading_date is not None:
+            start_trading_date = pd.Timestamp(start_trading_date).floor("D")
+            start_delivery_date = start_trading_date + relativedelta(days=1)
+
+        # Convert start delivery date from local timezone to UTC and string
+        start_delivery_date = start_delivery_date.replace(tzinfo=ZoneInfo(timezone))
+        start_delivery_date = start_delivery_date.astimezone(ZoneInfo("UTC"))
+        start_date_str = start_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Convert end trading date to end delivery date
+        if end_trading_date is not None:
+            end_trading_date = pd.Timestamp(end_trading_date).floor("D")
+            end_delivery_date = end_trading_date + relativedelta(days=2)
 
         # Convert end date to UTC and string
-        end_date = end_date.replace(tzinfo=ZoneInfo(timezone))
-        end_date = end_date.astimezone(ZoneInfo("UTC"))
-        end_date_str = end_date.strftime("%Y-%m-%d %H:%M:%S")
+        end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(timezone))
+        end_delivery_date = end_delivery_date.astimezone(ZoneInfo("UTC"))
+        end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
 
         # Create query
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_entsoe_day_ahead_spot_price"]
@@ -223,9 +258,11 @@ class DetDatabase:
     def load_entsoe_imbalance_prices(
         self,
         map_code: str,
-        start_date: datetime,
-        end_date: datetime,
         timezone: str,
+        start_trading_date: datetime = None,
+        end_trading_date: datetime = None,
+        start_delivery_date: datetime = None,
+        end_delivery_date: datetime = None,
         columns: list = None,
         process_data: bool = True,
     ) -> pd.DataFrame:
@@ -234,13 +271,19 @@ class DetDatabase:
 
         Args:
             map_code: Map code of the power country/region
-            start_date: Delivery start date. The start datetime is included in the filtering
-                (i.e. delivery dates >= start_date).
-            end_date: Delivery end date. The end datetime is excluded from the filtering
-                (i.e. delivery dates < end_date).
             timezone: Timezone of the power country/region. This argument is important because
                 ENTSOE provides all prices in the UTC timezone. We first convert the dates from
                 UTC to the local timezone, and then filter for the requested delivery period.
+            start_trading_date: Start trading date
+            end_trading_date: End trading date
+                Note: The user should provide either 'start_trading_date' and 'end_trading_date',
+                or 'start_delivery_date' and 'end_delivery_date'.
+            start_delivery_date: Delivery start date. The start datetime is included in the
+                filtering (i.e. delivery dates >= start_date).
+            end_delivery_date: Delivery end date. The end datetime is excluded from the filtering
+                (i.e. delivery dates < end_date).
+                Note: The user should provide either 'start_trading_date' and 'end_trading_date',
+                or 'start_delivery_date' and 'end_delivery_date'.
             columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
                 all columns.
             process_data: Indicates if data should be processed convert to standardized format
@@ -251,12 +294,29 @@ class DetDatabase:
         Raises:
             ValueError: Raises an error when input arguments 'columns' and 'process_data' are
                 not compatible
+            ValueError: Raises an error when the combination of trading dates and delivery dates
+                is not valid.
         """
         # Input validation
         if process_data and columns is not None:
             raise ValueError(
                 "Input argument 'process_data' can only be true if input argument 'columns' "
                 "is None."
+            )
+        if not (
+            start_trading_date is not None
+            and end_trading_date is not None
+            and start_delivery_date is None
+            and end_delivery_date is None
+        ) and not (
+            start_trading_date is None
+            and end_trading_date is None
+            and start_delivery_date is not None
+            and end_delivery_date is not None
+        ):
+            raise ValueError(
+                "Either 'start_trading_date' and 'end_trading_date', or 'start_delivery_date' "
+                "and 'end_delivery_date' should be provided."
             )
 
         # Set default column values
@@ -279,15 +339,24 @@ class DetDatabase:
         else:
             columns_str = f"[{'], ['.join(columns)}]"
 
-        # Convert start date to UTC and string
-        start_date = start_date.replace(tzinfo=ZoneInfo(timezone))
-        start_date = start_date.astimezone(ZoneInfo("UTC"))
-        start_date_str = start_date.strftime("%Y-%m-%d %H:%M:%S")
+        # Convert start trading date to start delivery date
+        if start_trading_date is not None:
+            start_delivery_date = pd.Timestamp(start_trading_date).floor("D")
+
+        # Convert start delivery date from local timezone to UTC and string
+        start_delivery_date = start_delivery_date.replace(tzinfo=ZoneInfo(timezone))
+        start_delivery_date = start_delivery_date.astimezone(ZoneInfo("UTC"))
+        start_date_str = start_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Convert end trading date to end delivery date
+        if end_trading_date is not None:
+            end_trading_date = pd.Timestamp(end_trading_date).floor("D")
+            end_delivery_date = end_trading_date + relativedelta(days=1)
 
         # Convert end date to UTC and string
-        end_date = end_date.replace(tzinfo=ZoneInfo(timezone))
-        end_date = end_date.astimezone(ZoneInfo("UTC"))
-        end_date_str = end_date.strftime("%Y-%m-%d %H:%M:%S")
+        end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(timezone))
+        end_delivery_date = end_delivery_date.astimezone(ZoneInfo("UTC"))
+        end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
 
         # Create query
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_entsoe_imbalance_price"]
@@ -418,7 +487,7 @@ class DetDatabase:
             f"SELECT {columns_str} FROM {table} "
             f"WHERE CommodityName='{commodity_name}' "
             f"AND TradingDate>='{start_trading_date_str}' "
-            f"AND TradingDate<'{end_trading_date_str}' "
+            f"AND TradingDate<='{end_trading_date_str}' "
             f"AND Tenor IN {tenors_str} "
             f"AND DeliveryType='{delivery_type}'"
         )
