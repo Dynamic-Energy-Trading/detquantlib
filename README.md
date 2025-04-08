@@ -34,7 +34,7 @@ Project dependencies are managed by [Poetry](https://python-poetry.org/).
 The project follows the standard Poetry structure:
 
 ```
-poetrytemplate
+project
 ├── pyproject.toml
 ├── README.md
 ├── src
