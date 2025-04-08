@@ -531,5 +531,5 @@ class DetDatabaseDefinitions:
         driver="{ODBC Driver 18 for SQL Server}",
         table_name_entsoe_day_ahead_spot_price="[ENTSOE].[DayAheadSpotPrice]",
         table_name_entsoe_imbalance_price="[ENTSOE].[ImbalancePrice]",
-        table_name_futures_eod_settlement_price="[FUT].[EODSettlementPrice]",
+        table_name_futures_eod_settlement_price="[VW].[EODSettlementPrice]",
     )
