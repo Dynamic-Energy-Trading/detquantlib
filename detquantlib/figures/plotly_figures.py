@@ -62,6 +62,35 @@ def save_plotly_fig_to_json(
         f.write(fig_json)
 
 
+def save_plotly_fig_to_html(
+    fig: go.Figure,
+    filename: str,
+    folder_dir: Path = get_default_plotly_folder_dir(),
+    standard_layout: bool = True,
+):
+    """
+    Saves a plotly figure object to an html file.
+
+    Args:
+        fig: Plotly figure
+        filename: Name of html file in which plotly figure will be saved
+        folder_dir: Folder directory where the html file will be saved
+        standard_layout: If true, enforces a standard plotly layout
+    """
+    # Create plotly folder if it doesn't exist yet
+    folder_dir.mkdir(parents=True, exist_ok=True)
+
+    # Define html file directory
+    file_dir = folder_dir.joinpath(f"{filename}.html")
+
+    # Adjust figure layout
+    if standard_layout:
+        fig = set_standard_layout(fig)
+
+    # Save figure to html
+    fig.write_html(file_dir)
+
+
 def show_plotly_fig_json(filename: str, folder_dir: Path = get_default_plotly_folder_dir()):
     """
     Short helper function to display a plotly figure stored in a json file.
