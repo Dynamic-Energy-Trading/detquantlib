@@ -57,7 +57,7 @@ workflows.
 
 #### Workflow: Continuous integration (CI)
 
-The continuous integration (CI) workflow runs tests to check the integrity of the codebase's 
+The continuous integration (CI) workflow runs tests to check the integrity of the codebase's
 content, and linters to check the consistency of its format.
 
 The workflow was inspired by the following preconfigured templates:
@@ -140,5 +140,5 @@ master commit.
 
 ##### Publishing package updates to PyPI
 
-The workflow automatically publishes every new master commit to 
+The workflow automatically publishes every new master commit to
 [PyPI](https://pypi.org/project/detquantlib/).
