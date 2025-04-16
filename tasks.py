@@ -92,7 +92,7 @@ def run_readme_toc(c):
         )
         exit(1)
 
-    print(f"Creating/updating table of contents of markdown file README.md ...")
+    print(f"Updating table of contents of markdown file README.md ...")
     _run(c, f"md_toc --in-place --no-list-coherence --newline-string \\n github {README_DIR}")
 
 
