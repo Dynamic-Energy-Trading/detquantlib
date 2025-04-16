@@ -25,11 +25,9 @@ across Quant models.
 - In any case, all codes changes should always be properly described/documented in GitHub
   issues and/or pull requests.
 
-## DevOps configuration
+## Dependencies
 
-### Dependencies
-
-#### Dependency manager
+### Dependency manager
 
 Project dependencies are managed by [Poetry](https://python-poetry.org/).
 
@@ -45,17 +43,17 @@ detquantlib
     └── __init__.py
 ```
 
-#### Dependabot
+### Dependabot
 
 This project is executing automated dependency updates using
 [Dependabot](https://docs.github.com/en/code-security/dependabot).
 
-### GitHub actions
+## GitHub actions
 
 This project is executing CI/CD checks using [GitHub actions](https://docs.github.com/en/actions)
 workflows.
 
-#### Workflow: Continuous integration (CI)
+### Workflow: Continuous integration (CI)
 
 The continuous integration (CI) workflow runs tests to check the integrity of the codebase's 
 content, and linters to check the consistency of its format.
@@ -67,7 +65,7 @@ The workflow was inspired by the following preconfigured templates:
 - [Poetry action](https://github.com/marketplace/actions/install-poetry-action): A GitHub action
   for installing and configuring Poetry.
 
-##### Invoke tasks
+#### Invoke tasks
 
 The workflow's checks and linters are defined with [Invoke](https://www.pyinvoke.org/) tasks.
 
@@ -94,7 +92,7 @@ Use the `-h` (or `--help`) argument for help about a particular development task
 inv lint -h
 ```
 
-##### CI check: Testing
+#### CI check: Testing
 
 Code changes are tested with the [Pytest](https://github.com/pytest-dev/pytest) package.
 
@@ -104,7 +102,7 @@ The CI check is executed with the following the development task:
 inv test -c
 ```
 
-##### CI check: Code formatting
+#### CI check: Code formatting
 
 Linters are used to check that the code is properly formatted:
 
@@ -129,6 +127,6 @@ This command fixes the parts of the code that should be reformatted. Adding the 
 `--check`) optional argument instructs the command to only _check_ if parts of the code should be
 reformatted, without applying any actual changes.
 
-#### Workflow: Package publisher
+### Workflow: Package publisher
 
 WIP
