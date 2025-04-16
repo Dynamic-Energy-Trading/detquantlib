@@ -76,17 +76,16 @@ defining/organizing task functions from a tasks.py file.
 
 ##### How to run Invoke tasks?
 
-Development tasks can be executed directly from the terminal, using the `inv` (or `invoke`)
+Invoke tasks can be executed directly from the terminal, using the `inv` (or `invoke`)
 command line tool.
 
-For guidance on the available Invoke development tasks, execute the following command in the
-terminal:
+For guidance on the available Invoke tasks, execute the following command in the terminal:
 
 ```cmd
 inv --list
 ```
 
-Use the `-h` (or `--help`) argument for help about a particular development task. For example:
+Use the `-h` (or `--help`) argument for help about a particular Invoke task. For example:
 
 ```cmd
 inv lint -h
@@ -96,7 +95,7 @@ inv lint -h
 
 Code changes are tested with the [Pytest](https://github.com/pytest-dev/pytest) package.
 
-The CI check is executed with the following the development task:
+The CI check is executed with the following the Invoke task:
 
 ```cmd
 inv test -c
@@ -111,7 +110,7 @@ Linters are used to check that the code is properly formatted:
 - [Black](https://github.com/psf/black) for the main code
 - [Pymarkdown](https://github.com/jackdewinter/pymarkdown) for the markdown file README.md
 
-The CI check is executed with the following development task:
+The CI check is executed with the following Invoke task:
 
 ```cmd
 inv lint -c
