@@ -3,7 +3,7 @@
 The DET Quant Library is an internal library containing functions and classes that can be used
 across Quant models.
 
-## Instructions
+## Development instructions
 
 #### Version control
 
@@ -50,7 +50,7 @@ This project is executing automated dependency updates using
 
 ## GitHub actions
 
-This project is executing CI/CD checks using [GitHub actions](https://docs.github.com/en/actions)
+This project contains a CI/CD pipeline using [GitHub actions](https://docs.github.com/en/actions)
 workflows.
 
 ### Workflow: Continuous integration (CI)
@@ -129,4 +129,21 @@ reformatted, without applying any actual changes.
 
 ### Workflow: Package publisher
 
-WIP
+The package publisher workflow checks the validity of package version updates, creates version
+tags, and publishes package updates to PyPI.
+
+#### Checking version updates
+
+The version number is specified via the `version` field in the pyproject.toml file, and must be
+updated with every new master commit. If the version is not updated, the GitHub workflow will
+fail. Version numbers should follow semantic versioning.
+
+#### Creating version tags
+
+If the new package version is valid, the workflow automatically creates a new tag for every new
+master commit.
+
+#### Publishing package updates to PyPI
+
+The workflow automatically publishes every new master commit to 
+[PyPI](https://pypi.org/project/detquantlib/).
