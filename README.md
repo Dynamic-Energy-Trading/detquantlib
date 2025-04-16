@@ -45,7 +45,7 @@ detquantlib
 
 ### Dependabot
 
-This project is executing automated dependency updates using
+Automated dependency updates are executed with
 [Dependabot](https://docs.github.com/en/code-security/dependabot).
 
 ## GitHub actions
