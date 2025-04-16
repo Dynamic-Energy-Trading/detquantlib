@@ -50,7 +50,7 @@ This project is executing automated dependency updates using
 
 ## GitHub actions
 
-This project contains a CI/CD pipeline using [GitHub actions](https://docs.github.com/en/actions)
+The project's CI/CD pipeline is enforced with [GitHub actions](https://docs.github.com/en/actions)
 workflows.
 
 ### Workflow: Continuous integration (CI)
