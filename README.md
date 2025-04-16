@@ -95,7 +95,7 @@ inv lint -h
 
 Code changes are tested with the [Pytest](https://github.com/pytest-dev/pytest) package.
 
-The CI check is executed with the following the Invoke task:
+The CI check is executed with the following Invoke task:
 
 ```cmd
 inv test -c
@@ -133,7 +133,8 @@ tags, and publishes package updates to PyPI.
 
 ##### Checking version updates
 
-- The workflow enforces version control.
+The workflow enforces version control:
+
 - The version number is specified via the `version` field in the pyproject.toml file.
 - The version number needs to be updated with every new master commit. If the version is not
   updated, the GitHub workflow will fail.
