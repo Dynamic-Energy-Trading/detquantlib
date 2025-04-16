@@ -24,7 +24,6 @@
 
 <!--TOC-->
 
-
 ## General overview
 
 The DET Quant Library is an internal library containing functions and classes that can be used
