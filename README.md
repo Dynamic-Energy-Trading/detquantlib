@@ -5,9 +5,7 @@
 <!--TOC-->
 
 - [DET Quant Library](#det-quant-library)
-
   - [Table of contents](#table-of-contents)
-
   - [General overview](#general-overview)
 
   - [Configuration](#configuration)
