@@ -1,5 +1,47 @@
 # DET Quant Library
 
+## Table of contents
+
+<!--TOC-->
+
+- [DET Quant Library](#det-quant-library)
+
+  - [Table of contents](#table-of-contents)
+
+  - [General overview](#general-overview)
+
+  - [Configuration](#configuration)
+
+    - [Dependencies](#dependencies)
+
+      - [Dependency manager](#dependency-manager)
+
+      - [Dependabot](#dependabot)
+
+    - [GitHub actions](#github-actions)
+
+      - [Workflow: Continuous integration (CI)](#workflow-continuous-integration-ci)
+
+        - [Invoke tasks](#invoke-tasks)
+
+        - [CI check: Testing](#ci-check-testing)
+
+        - [CI check: Code formatting](#ci-check-code-formatting)
+
+      - [Workflow: Package publisher](#workflow-package-publisher)
+
+        - [Checking version updates](#checking-version-updates)
+
+        - [Creating version tags](#creating-version-tags)
+
+        - [Publishing package updates to PyPI](#publishing-package-updates-to-pypi)
+
+    - [Release notes](#release-notes)
+
+<!--TOC-->
+
+## General overview
+
 The DET Quant Library is an internal library containing functions and classes that can be used
 across Quant models.
 
@@ -128,10 +170,10 @@ The workflow automatically publishes every new master commit to
 
 ### Release notes
 
-When deemed necessary (especially in case of major updates), developers can document code 
+When deemed necessary (especially in case of major updates), developers can document code
 changes in dedicated GitHub release notes.
 
 Release notes can be created via <https://github.com/Dynamic-Energy-Trading/detquantlib/releases.>
 
-In any case, all codes changes should always be properly described/documented in GitHub issues 
+In any case, all codes changes should always be properly described/documented in GitHub issues
 and/or pull requests.

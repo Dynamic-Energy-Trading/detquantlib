@@ -82,6 +82,21 @@ def run_lint_code(c, check=False):
 
 
 @task()
+def run_readme_toc(c):
+    # type: (Context) -> None
+    """Creates/updates the table of contents of the markdown file README.md."""
+    if not README_DIR.is_file():
+        print(
+            f"File '{README_DIR}' not found! Please make sure that a README.md file exists "
+            f"and that it is located in the project's root directory."
+        )
+        exit(1)
+
+    print(f"Creating/updating table of contents of markdown file README.md ...")
+    _run(c, f"md_toc --in-place github {README_DIR}")
+
+
+@task()
 def run_lint_readme(c, check=False):
     # type: (Context, bool) -> None
     """
@@ -127,4 +142,5 @@ def lint(c, check=False, type_="all"):
     if type_ in ["code", "all"]:
         run_lint_code(c, check=check)
     if type_ in ["readme", "all"]:
+        run_readme_toc(c)
         run_lint_readme(c, check=check)
