@@ -3,28 +3,6 @@
 The DET Quant Library is an internal library containing functions and classes that can be used
 across Quant models.
 
-## Development instructions
-
-#### Version control
-
-- This repository contains a version control workflow.
-- The version number is specified via the `version` field in the pyproject.toml file.
-- The version number needs to be updated with every new master commit. If the version is not
-  updated, the GitHub workflow will fail.
-- Version numbers should follow semantic versioning (i.e. `X.Y.Z`). That is:
-  - `X` increments represent major, non-backward compatible updates.
-  - `Y` increments represent minor, backward compatible functionality updates.
-  - `Z` increments represent patch/bugfix, backward compatible updates.
-
-#### Release notes
-
-- When deemed necessary (especially in case of major updates), developers can document code
-  changes in dedicated GitHub release notes.
-- Release notes can be created via
-  <https://github.com/Dynamic-Energy-Trading/detquantlib/releases.>
-- In any case, all codes changes should always be properly described/documented in GitHub
-  issues and/or pull requests.
-
 ## Configuration
 
 ### Dependencies
@@ -129,9 +107,14 @@ tags, and publishes package updates to PyPI.
 
 ##### Checking version updates
 
-The version number is specified via the `version` field in the pyproject.toml file, and must be
-updated with every new master commit. If the version is not updated, the GitHub workflow will
-fail. Version numbers should follow semantic versioning.
+- The workflow enforces version control.
+- The version number is specified via the `version` field in the pyproject.toml file.
+- The version number needs to be updated with every new master commit. If the version is not
+  updated, the GitHub workflow will fail.
+- Version numbers should follow semantic versioning (i.e. `X.Y.Z`). That is:
+  - `X` increments represent major, non-backward compatible updates.
+  - `Y` increments represent minor, backward compatible functionality updates.
+  - `Z` increments represent patch/bugfix, backward compatible updates.
 
 ##### Creating version tags
 
@@ -142,3 +125,13 @@ master commit.
 
 The workflow automatically publishes every new master commit to
 [PyPI](https://pypi.org/project/detquantlib/).
+
+### Release notes
+
+When deemed necessary (especially in case of major updates), developers can document code 
+changes in dedicated GitHub release notes.
+
+Release notes can be created via <https://github.com/Dynamic-Energy-Trading/detquantlib/releases.>
+
+In any case, all codes changes should always be properly described/documented in GitHub issues 
+and/or pull requests.
