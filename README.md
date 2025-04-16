@@ -25,9 +25,11 @@ across Quant models.
 - In any case, all codes changes should always be properly described/documented in GitHub
   issues and/or pull requests.
 
-## Dependencies
+## Configuration
 
-### Dependency manager
+### Dependencies
+
+#### Dependency manager
 
 Project dependencies are managed by [Poetry](https://python-poetry.org/).
 
@@ -43,7 +45,7 @@ detquantlib
     └── __init__.py
 ```
 
-### Dependabot
+#### Dependabot
 
 Automated dependency updates are executed with
 [Dependabot](https://docs.github.com/en/code-security/dependabot).
