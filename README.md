@@ -7,36 +7,23 @@
 - [DET Quant Library](#det-quant-library)
   - [Table of contents](#table-of-contents)
   - [General overview](#general-overview)
-
   - [Configuration](#configuration)
-
     - [Dependencies](#dependencies)
-
       - [Dependency manager](#dependency-manager)
-
       - [Dependabot](#dependabot)
-
     - [GitHub actions](#github-actions)
-
       - [Workflow: Continuous integration (CI)](#workflow-continuous-integration-ci)
-
         - [Invoke tasks](#invoke-tasks)
-
         - [CI check: Testing](#ci-check-testing)
-
         - [CI check: Code formatting](#ci-check-code-formatting)
-
       - [Workflow: Package publisher](#workflow-package-publisher)
-
         - [Checking version updates](#checking-version-updates)
-
         - [Creating version tags](#creating-version-tags)
-
         - [Publishing package updates to PyPI](#publishing-package-updates-to-pypi)
-
     - [Release notes](#release-notes)
 
 <!--TOC-->
+
 
 ## General overview
 
