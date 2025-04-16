@@ -69,12 +69,8 @@ The workflow was inspired by the following preconfigured templates:
 
 ##### Invoke tasks
 
-The workflow's checks and linters are defined with [Invoke](https://www.pyinvoke.org/) tasks.
-
-The Invoke package provides a clean, high level API for running shell commands and 
-defining/organizing task functions from a tasks.py file.
-
-###### How to run Invoke tasks?
+The workflow's checks and linters are specified with [Invoke](https://www.pyinvoke.org/) tasks,
+defined in a tasks.py file.
 
 Invoke tasks can be executed directly from the terminal, using the `inv` (or `invoke`)
 command line tool.
