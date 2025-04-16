@@ -50,12 +50,12 @@ detquantlib
 Automated dependency updates are executed with
 [Dependabot](https://docs.github.com/en/code-security/dependabot).
 
-## GitHub actions
+### GitHub actions
 
 The project's CI/CD pipeline is enforced with [GitHub actions](https://docs.github.com/en/actions)
 workflows.
 
-### Workflow: Continuous integration (CI)
+#### Workflow: Continuous integration (CI)
 
 The continuous integration (CI) workflow runs tests to check the integrity of the codebase's 
 content, and linters to check the consistency of its format.
@@ -67,16 +67,14 @@ The workflow was inspired by the following preconfigured templates:
 - [Poetry action](https://github.com/marketplace/actions/install-poetry-action): A GitHub action
   for installing and configuring Poetry.
 
-#### Invoke tasks
+##### Invoke tasks
 
 The workflow's checks and linters are defined with [Invoke](https://www.pyinvoke.org/) tasks.
-
-##### What is Invoke?
 
 The Invoke package provides a clean, high level API for running shell commands and 
 defining/organizing task functions from a tasks.py file.
 
-##### How to run Invoke tasks?
+###### How to run Invoke tasks?
 
 Invoke tasks can be executed directly from the terminal, using the `inv` (or `invoke`)
 command line tool.
@@ -93,7 +91,7 @@ Use the `-h` (or `--help`) argument for help about a particular Invoke task. For
 inv lint -h
 ```
 
-#### CI check: Testing
+##### CI check: Testing
 
 Code changes are tested with the [Pytest](https://github.com/pytest-dev/pytest) package.
 
@@ -103,7 +101,7 @@ The CI check is executed with the following the Invoke task:
 inv test -c
 ```
 
-#### CI check: Code formatting
+##### CI check: Code formatting
 
 Linters are used to check that the code is properly formatted:
 
@@ -128,23 +126,23 @@ This command fixes the parts of the code that should be reformatted. Adding the 
 `--check`) optional argument instructs the command to only _check_ if parts of the code should be
 reformatted, without applying any actual changes.
 
-### Workflow: Package publisher
+#### Workflow: Package publisher
 
 The package publisher workflow checks the validity of package version updates, creates version
 tags, and publishes package updates to PyPI.
 
-#### Checking version updates
+##### Checking version updates
 
 The version number is specified via the `version` field in the pyproject.toml file, and must be
 updated with every new master commit. If the version is not updated, the GitHub workflow will
 fail. Version numbers should follow semantic versioning.
 
-#### Creating version tags
+##### Creating version tags
 
 If the new package version is valid, the workflow automatically creates a new tag for every new
 master commit.
 
-#### Publishing package updates to PyPI
+##### Publishing package updates to PyPI
 
 The workflow automatically publishes every new master commit to 
 [PyPI](https://pypi.org/project/detquantlib/).
