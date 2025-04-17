@@ -7,18 +7,19 @@ on using Invoke.
 
 import pathlib
 import platform
+import subprocess
 
 from invoke import task
 from invoke.context import Context
 from invoke.runners import Result
 
-
 # Project related paths
 ROOT_DIR = pathlib.Path(__file__).parent
 SOURCE_DIR = ROOT_DIR.joinpath("detquantlib/")
 TEST_DIR = ROOT_DIR.joinpath("tests/")
+TASKS_DIR = ROOT_DIR.joinpath("tasks.py")
 README_DIR = ROOT_DIR.joinpath("README.md")
-PYTHON_TARGETS = [SOURCE_DIR, TEST_DIR]  # directories containing .py files
+PYTHON_TARGETS = [SOURCE_DIR, TEST_DIR, TASKS_DIR]  # directories containing .py files
 PYTHON_TARGETS_STR = " ".join([str(p) for p in PYTHON_TARGETS])
 
 
@@ -33,6 +34,8 @@ def test(c, coverage_report=False):
     Run tests with pytest.
 
     Args:
+        c: Invoke Context object. Note that this argument does not need to be passed when calling
+            the task through the CLI because Invoke does it automatically.
         coverage_report: If true, produces a coverage report as well.
     """
     options = (
@@ -48,6 +51,8 @@ def run_lint_imports(c, check=False):
     Run linters on the imports section.
 
     Args:
+        c: Invoke Context object. Note that this argument does not need to be passed when calling
+            the task through the CLI because Invoke does it automatically.
         check: If true, checks if code should be formatted, but does not apply any formatting
             changes. Otherwise, applies formatting changes.
     """
@@ -60,7 +65,13 @@ def run_lint_imports(c, check=False):
 @task()
 def run_lint_docstrings(c):
     # type: (Context) -> None
-    """Run linters on the docstrings descriptions."""
+    """
+    Run linters on the docstrings descriptions.
+
+    Args:
+        c: Invoke Context object. Note that this argument does not need to be passed when calling
+            the task through the CLI because Invoke does it automatically.
+    """
     print("Running linters on docstrings descriptions ...")
     _run(c, f"poetry run darglint -v 2 {PYTHON_TARGETS_STR}")
 
@@ -72,6 +83,8 @@ def run_lint_code(c, check=False):
     Run linters on the main code.
 
     Args:
+        c: Invoke Context object. Note that this argument does not need to be passed when calling
+            the task through the CLI because Invoke does it automatically.
         check: If true, checks if code should be formatted, but does not apply any formatting
             changes. Otherwise, applies formatting changes.
     """
@@ -82,12 +95,40 @@ def run_lint_code(c, check=False):
 
 
 @task()
+def run_readme_toc(c):
+    # type: (Context) -> None
+    """
+    Creates/updates the table of contents of the markdown file README.md.
+
+    Note: The task is run with subprocess.run() instead of Invoke's c.run(), because invoke
+    cannot handle the "\\n" argument cross-platform.
+
+    Args:
+        c: Invoke Context object. Note that this argument does not need to be passed when calling
+            the task through the CLI because Invoke does it automatically.
+    """
+    if not README_DIR.is_file():
+        print(
+            f"File '{README_DIR}' not found! Please make sure that a README.md file exists "
+            f"and that it is located in the project's root directory."
+        )
+        exit(1)
+
+    # Build command. Note:
+    print(f"Updating table of contents of markdown file README.md ...")
+    command = ["md_toc", "--in-place", "-c", "--newline-string", "\\n", "github", f"{README_DIR}"]
+    subprocess.run(command, check=True)
+
+
+@task()
 def run_lint_readme(c, check=False):
     # type: (Context, bool) -> None
     """
     Run linters on the markdown file README.md.
 
     Args:
+        c: Invoke Context object. Note that this argument does not need to be passed when calling
+            the task through the CLI because Invoke does it automatically.
         check: If true, checks if code should be formatted, but does not apply any formatting
             changes. Otherwise, applies formatting changes.
     """
@@ -111,6 +152,8 @@ def lint(c, check=False, type_="all"):
     Run linters.
 
     Args:
+        c: Invoke Context object. Note that this argument does not need to be passed when calling
+            the task through the CLI because Invoke does it automatically.
         check: If true, checks if code should be formatted, but does not apply any formatting
             changes. Otherwise, applies formatting changes.
         type_: Determines on which part of the code to run the linters.
@@ -127,4 +170,5 @@ def lint(c, check=False, type_="all"):
     if type_ in ["code", "all"]:
         run_lint_code(c, check=check)
     if type_ in ["readme", "all"]:
+        run_readme_toc(c)
         run_lint_readme(c, check=check)

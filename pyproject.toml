@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "detquantlib"
-version = "2.1.0"
+version = "2.1.1"
 description = "An internal library containing functions and classes that can be used across Quant models."
 authors = ["DET"]
 readme = "README.md"
@@ -27,13 +27,14 @@ darglint = "^1.8.1"
 isort = "^6.0.1"
 colorama = "^0.4.6"
 pymarkdownlnt = "^0.9.26"
+md-toc = "^9.0.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.isort]
-multi_line_output = 5
+multi_line_output = 3
 include_trailing_comma = true
 line_length = 99
 force_grid_wrap = 0
