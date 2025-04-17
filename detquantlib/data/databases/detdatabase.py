@@ -47,7 +47,7 @@ class DetDatabase:
         for d in required_env_vars:
             if d["name"] not in available_env_vars:
                 required_env_vars_names = [x["name"] for x in required_env_vars]
-                required_env_vars_str = ", ".join(f"'{item}'" for item in required_env_vars_names)
+                required_env_vars_str = ", ".join(f"'{x}'" for x in required_env_vars_names)
                 raise EnvironmentError(
                     f"The DetDatabase class requires the following environment variables: "
                     f"{required_env_vars_str}. Environment variable '{d['name']}' "
@@ -99,8 +99,7 @@ class DetDatabase:
 
     def load_entsoe_day_ahead_spot_prices(
         self,
-        map_code: str,
-        timezone: str,
+        commodity_name: str,
         start_trading_date: datetime = None,
         end_trading_date: datetime = None,
         start_delivery_date: datetime = None,
@@ -112,7 +111,7 @@ class DetDatabase:
         Loads entsoe day-ahead spot prices from the database.
 
         Args:
-            map_code: Map code of the power country/region
+            commodity_name: Commodity name (as defined in the [META].[Commodity] database table)
             start_trading_date: Start trading date
             end_trading_date: End trading date
                 Note: The user should provide either 'start_trading_date' and 'end_trading_date',
@@ -123,9 +122,6 @@ class DetDatabase:
                 (i.e. delivery dates < end_date).
                 Note: The user should provide either 'start_trading_date' and 'end_trading_date',
                 or 'start_delivery_date' and 'end_delivery_date'.
-            timezone: Timezone of the power country/region. This argument is important because
-                ENTSOE provides all prices in the UTC timezone. We first convert the dates from
-                UTC to the local timezone, and then filter for the requested delivery period.
             columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
                 all columns.
             process_data: Indicates if data should be processed convert to standardized format
@@ -174,6 +170,26 @@ class DetDatabase:
             columns_str = str(columns[0])
         else:
             columns_str = f"[{'], ['.join(columns)}]"
+
+        # Get commodity information (map code and local timezone)
+        # Note: The local timezone is important because ENTSOE provides all prices in the UTC
+        # timezone. We first convert the dates from UTC to the local timezone, and then filter
+        # for the requested delivery period.
+        commodity_info = self.load_commodities(
+            columns=["Timezone", "EntsoeMapCode"], conditions=f"WHERE Name='{commodity_name}'"
+        )
+        if commodity_info.shape[0] > 1:
+            raise ValueError(f"More than one match found with commodity '{commodity_name}'.")
+        elif commodity_info.shape[0] == 0:
+            supported_commodities = self.load_commodities(columns=["Name"])
+            supported_commodities_str = ", ".join(f"'{x}'" for x in supported_commodities["Name"])
+            raise ValueError(
+                f"Commodity '{commodity_name}' is not supported. Supported commodities: "
+                f"{supported_commodities_str}."
+            )
+        else:
+            map_code = commodity_info.loc[0, "EntsoeMapCode"]
+            timezone = commodity_info.loc[0, "Timezone"]
 
         # Convert start trading date to start delivery date
         if start_trading_date is not None:
@@ -278,8 +294,7 @@ class DetDatabase:
 
     def load_entsoe_imbalance_prices(
         self,
-        map_code: str,
-        timezone: str,
+        commodity_name: str,
         start_trading_date: datetime = None,
         end_trading_date: datetime = None,
         start_delivery_date: datetime = None,
@@ -291,10 +306,7 @@ class DetDatabase:
         Loads entsoe imbalance prices from the database.
 
         Args:
-            map_code: Map code of the power country/region
-            timezone: Timezone of the power country/region. This argument is important because
-                ENTSOE provides all prices in the UTC timezone. We first convert the dates from
-                UTC to the local timezone, and then filter for the requested delivery period.
+            commodity_name: Commodity name (as defined in the [META].[Commodity] database table)
             start_trading_date: Start trading date
             end_trading_date: End trading date
                 Note: The user should provide either 'start_trading_date' and 'end_trading_date',
@@ -359,6 +371,26 @@ class DetDatabase:
             columns_str = str(columns[0])
         else:
             columns_str = f"[{'], ['.join(columns)}]"
+
+        # Get commodity information (map code and local timezone)
+        # Note: The local timezone is important because ENTSOE provides all prices in the UTC
+        # timezone. We first convert the dates from UTC to the local timezone, and then filter
+        # for the requested delivery period.
+        commodity_info = self.load_commodities(
+            columns=["Timezone", "EntsoeMapCode"], conditions=f"WHERE Name='{commodity_name}'"
+        )
+        if commodity_info.shape[0] > 1:
+            raise ValueError(f"More than one match found with commodity '{commodity_name}'.")
+        elif commodity_info.shape[0] == 0:
+            supported_commodities = self.load_commodities(columns=["Name"])
+            supported_commodities_str = ", ".join(f"'{x}'" for x in supported_commodities["Name"])
+            raise ValueError(
+                f"Commodity '{commodity_name}' is not supported. Supported commodities: "
+                f"{supported_commodities_str}."
+            )
+        else:
+            map_code = commodity_info.loc[0, "EntsoeMapCode"]
+            timezone = commodity_info.loc[0, "Timezone"]
 
         # Convert start trading date to start delivery date
         if start_trading_date is not None:
@@ -474,11 +506,11 @@ class DetDatabase:
         of trading dates.
 
         Args:
-            commodity_name: Commodity name
+            commodity_name: Commodity name (as defined in the [META].[Commodity] database table)
             start_trading_date: Start trading date
             end_trading_date: End trading date
             tenors: Product tenors (e.g. "Month", "Quarter", "Year")
-            delivery_type: Delivery type
+            delivery_type: Delivery type ("Base", "Peak", "Offpeak")
             columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
                 all columns.
 
@@ -534,12 +566,34 @@ class DetDatabase:
 
         return df
 
+    def load_commodities(self, columns: list = None, conditions: str = None) -> pd.DataFrame:
+        # Set default column values
+        if columns is None:
+            columns = ["*"]
+
+        # Convert columns from list to string
+        if len(columns) == 1:
+            columns_str = str(columns[0])
+        else:
+            columns_str = f"[{'], ['.join(columns)}]"
+
+        # Create query
+        table = DetDatabaseDefinitions.DEFINITIONS["table_name_commodity"]
+        query = f"SELECT {columns_str} FROM {table} {conditions}"
+
+        # Query db
+        self.open_connection()
+        df = self.query_db(query)
+        self.close_connection()
+
+        return df
+
 
 class DetDatabaseDefinitions:
     """A class containing some hard-coded definitions related to the DET database."""
 
     DEFINITIONS = dict(
-        driver="{ODBC Driver 18 for SQL Server}",
+        table_name_commodity="[META].[Commodity]",
         table_name_entsoe_day_ahead_spot_price="[ENTSOE].[DayAheadSpotPrice]",
         table_name_entsoe_imbalance_price="[ENTSOE].[ImbalancePrice]",
         table_name_futures_eod_settlement_price="[VW].[EODSettlementPrice]",
