@@ -1,4 +1,5 @@
 # Python built-in packages
+import os
 import warnings
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -16,42 +17,52 @@ class DetDatabase:
 
     def __init__(
         self,
-        username: str,
-        password: str,
-        server: str,
-        database: str,
         connection: pyodbc.Connection = None,
+        driver: str = "{ODBC Driver 18 for SQL Server}",
     ):
         """
         Constructor method.
 
         Args:
-            username: Database username
-            password: Database password
-            server: Database server name
-            database: Database name
             connection: Database connection object. This argument does not have to be passed
                 when creating the object. It can be set after the object has been created, using
                 the open_connection() method.
+            driver: ODBC driver
         """
-        self.username = username
-        self.password = password
-        self.server = server
-        self.database = database
         self.connection = connection
+        self.driver = driver
 
-        # Define the ODBC driver
-        self.driver = "{ODBC Driver 18 for SQL Server}"
+        # Check if environment variables needed by the class are defined
+        required_env_vars = [
+            dict(name="DET_DB_NAME", value=None, description="DET database name"),
+            dict(name="DET_DB_SERVER", value=None, description="DET database server name"),
+            dict(
+                name="DET_DB_USERNAME", value=None, description="Username to connect to database"
+            ),
+            dict(
+                name="DET_DB_PASSWORD", value=None, description="Password to connect to database"
+            ),
+        ]
+        available_env_vars = os.environ
+        for d in required_env_vars:
+            if d["name"] not in available_env_vars:
+                required_env_vars_names = [x["name"] for x in required_env_vars]
+                required_env_vars_str = ", ".join(f"'{item}'" for item in required_env_vars_names)
+                raise EnvironmentError(
+                    f"The DetDatabase class requires the following environment variables: "
+                    f"{required_env_vars_str}. Environment variable '{d['name']}' "
+                    f"(description: '{d['description']}') not found."
+                )
 
     def open_connection(self):
         """Opens a connection to the database."""
         # Create the connection string
         connection_str = (
             f"DRIVER={self.driver};"
-            f"SERVER={self.server};"
-            f"DATABASE={self.database};"
-            f"UID={self.username};"
-            f"PWD={self.password}"
+            f"SERVER={os.getenv('DET_DB_SERVER')};"
+            f"DATABASE={os.getenv('DET_DB_NAME')};"
+            f"UID={os.getenv('DET_DB_USERNAME')};"
+            f"PWD={os.getenv('DET_DB_PASSWORD')}"
         )
         self.connection = pyodbc.connect(connection_str)
 
