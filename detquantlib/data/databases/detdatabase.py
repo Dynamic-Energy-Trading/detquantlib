@@ -28,6 +28,9 @@ class DetDatabase:
                 when creating the object. It can be set after the object has been created, using
                 the open_connection() method.
             driver: ODBC driver
+
+        Raises:
+            EnvironmentError: Raises an error if environment variables are not defined
         """
         self.connection = connection
         self.driver = driver
@@ -130,10 +133,13 @@ class DetDatabase:
             Dataframe containing day-ahead spot prices
 
         Raises:
-            ValueError: Raises an error when input arguments 'columns' and 'process_data' are
-                not compatible
-            ValueError: Raises an error when the combination of trading dates and delivery dates
+            ValueError: Raises an error if input arguments 'columns' and 'process_data' are not
+                compatible
+            ValueError: Raises an error if the combination of trading dates and delivery dates
                 is not valid.
+            ValueError: Raises an error if match with input commodity name is not unique
+            ValueError: Raises an error if input commodity is not supported
+            ValueError: Raises an error if no price data is found for user inputs
         """
         # Input validation
         if process_data and columns is not None:
@@ -226,7 +232,7 @@ class DetDatabase:
         self.close_connection()
 
         if df.empty:
-            raise ImportError("No data found for user-defined inputs.")
+            raise ValueError("No price data found for user-defined inputs.")
 
         # Sort data by delivery date
         df.sort_values(
@@ -318,10 +324,13 @@ class DetDatabase:
             Dataframe containing imbalance prices
 
         Raises:
-            ValueError: Raises an error when input arguments 'columns' and 'process_data' are
-                not compatible
-            ValueError: Raises an error when the combination of trading dates and delivery dates
+            ValueError: Raises an error if input arguments 'columns' and 'process_data' are not
+                compatible
+            ValueError: Raises an error if the combination of trading dates and delivery dates
                 is not valid.
+            ValueError: Raises an error if match with input commodity name is not unique
+            ValueError: Raises an error if input commodity is not supported
+            ValueError: Raises an error if no price data is found for user inputs
         """
         # Input validation
         if process_data and columns is not None:
@@ -419,7 +428,7 @@ class DetDatabase:
         self.close_connection()
 
         if df.empty:
-            raise ImportError("No data found for user-defined inputs.")
+            raise ValueError("No price data found for user-defined inputs.")
 
         # Sort data by delivery date
         df.sort_values(
@@ -502,6 +511,9 @@ class DetDatabase:
 
         Returns:
             Dataframe containing futures end-of-day settlement prices
+
+        Raises:
+            ValueError: Raises an error if no price data is found for user inputs
         """
         # Set default column values
         if columns is None:
@@ -537,7 +549,7 @@ class DetDatabase:
         self.close_connection()
 
         if df.empty:
-            raise ImportError("No data found for user-defined inputs.")
+            raise ValueError("No price data found for user-defined inputs.")
 
         # Sort data
         df.sort_values(
