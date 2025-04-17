@@ -253,7 +253,7 @@ class DetDatabase:
 
     @staticmethod
     def process_day_ahead_spot_prices(
-            df_in: pd.DataFrame, commodity_name: str, timezone: str
+        df_in: pd.DataFrame, commodity_name: str, timezone: str
     ) -> pd.DataFrame:
         """
         Processes day-ahead spot prices and converts from ENTSOE format to standardized format.
@@ -449,7 +449,7 @@ class DetDatabase:
 
     @staticmethod
     def process_imbalance_prices(
-            df_in: pd.DataFrame, commodity_name: str, timezone: str
+        df_in: pd.DataFrame, commodity_name: str, timezone: str
     ) -> pd.DataFrame:
         """
         Processes imbalance prices and converts from ENTSOE format to standardized format.
@@ -600,7 +600,9 @@ class DetDatabase:
 
         return df
 
-    def get_commodity_info(self, filter_column: str, filter_value: str, info_columns: list) -> dict:
+    def get_commodity_info(
+        self, filter_column: str, filter_value: str, info_columns: list
+    ) -> dict:
         """
         Finds information related to a specific, user-defined commodity.
 
@@ -610,7 +612,7 @@ class DetDatabase:
             info_columns: Columns containing the requested information
 
         Returns:
-            commodity_info: A dictionary containing the requested information
+            A dictionary containing the requested information
 
         Raises:
             ValueError: Raises an error if match with input filter value is not unique
