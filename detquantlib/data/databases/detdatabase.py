@@ -225,6 +225,9 @@ class DetDatabase:
         df = self.query_db(query)
         self.close_connection()
 
+        if df.empty:
+            raise ImportError("No data found for user-defined inputs.")
+
         # Sort data by delivery date
         df.sort_values(
             by=["DateTime(UTC)"], axis=0, ascending=True, inplace=True, ignore_index=True
@@ -238,40 +241,30 @@ class DetDatabase:
 
         # Process raw data and convert it to standardized format
         if process_data:
-            df = DetDatabase.process_day_ahead_spot_prices(df, timezone)
+            df = DetDatabase.process_day_ahead_spot_prices(df, commodity_name, timezone)
 
         return df
 
     @staticmethod
-    def process_day_ahead_spot_prices(df_in: pd.DataFrame, timezone: str) -> pd.DataFrame:
+    def process_day_ahead_spot_prices(
+            df_in: pd.DataFrame, commodity_name: str, timezone: str
+    ) -> pd.DataFrame:
         """
         Processes day-ahead spot prices and converts from ENTSOE format to standardized format.
 
         Args:
             df_in: Dataframe containing day-ahead spot prices
+            commodity_name: Commodity name (as defined in the [META].[Commodity] database table)
             timezone: Timezone of the power country/region
 
         Returns:
             Processed dataframe containing day-ahead spot prices
         """
-        map_code_to_commodity_mapper = dict(
-            NL={"commodity_name": "DutchPower", "product_code": "Q0B"}
-        )
-
         # Initialize output dataframe
         df_out = pd.DataFrame()
 
         # Set commodity name
-        commodity_name = [
-            map_code_to_commodity_mapper[mc]["commodity_name"] for mc in df_in["MapCode"]
-        ]
-        df_out["CommodityName"] = commodity_name
-
-        # Set product code
-        product_code = [
-            map_code_to_commodity_mapper[mc]["product_code"] for mc in df_in["MapCode"]
-        ]
-        df_out["ProductCode"] = product_code
+        df_out["CommodityName"] = [commodity_name] * df_in.shape[0]
 
         # Set trading date
         trading_date = [d - relativedelta(days=1, hour=0) for d in df_in[f"DateTime({timezone})"]]
@@ -425,6 +418,9 @@ class DetDatabase:
         df = self.query_db(query)
         self.close_connection()
 
+        if df.empty:
+            raise ImportError("No data found for user-defined inputs.")
+
         # Sort data by delivery date
         df.sort_values(
             by=["DateTime(UTC)"], axis=0, ascending=True, inplace=True, ignore_index=True
@@ -438,40 +434,30 @@ class DetDatabase:
 
         # Process raw data and convert it to standardized format
         if process_data:
-            df = DetDatabase.process_imbalance_prices(df, timezone)
+            df = DetDatabase.process_imbalance_prices(df, commodity_name, timezone)
 
         return df
 
     @staticmethod
-    def process_imbalance_prices(df_in: pd.DataFrame, timezone: str) -> pd.DataFrame:
+    def process_imbalance_prices(
+            df_in: pd.DataFrame, commodity_name: str, timezone: str
+    ) -> pd.DataFrame:
         """
         Processes imbalance prices and converts from ENTSOE format to standardized format.
 
         Args:
             df_in: Dataframe containing imbalance prices
+            commodity_name: Commodity name (as defined in the [META].[Commodity] database table)
             timezone: Timezone of the power country/region
 
         Returns:
             Processed dataframe containing imbalance prices
         """
-        map_code_to_commodity_mapper = dict(
-            NL={"commodity_name": "DutchPower", "product_code": "Q0B"}
-        )
-
         # Initialize output dataframe
         df_out = pd.DataFrame()
 
         # Set commodity name
-        commodity_name = [
-            map_code_to_commodity_mapper[mc]["commodity_name"] for mc in df_in["MapCode"]
-        ]
-        df_out["CommodityName"] = commodity_name
-
-        # Set product code
-        product_code = [
-            map_code_to_commodity_mapper[mc]["product_code"] for mc in df_in["MapCode"]
-        ]
-        df_out["ProductCode"] = product_code
+        df_out["CommodityName"] = [commodity_name] * df_in.shape[0]
 
         # Set trading date
         df_out["TradingDate"] = df_in[f"DateTime({timezone})"].dt.floor("D").values
@@ -549,6 +535,9 @@ class DetDatabase:
         self.open_connection()
         df = self.query_db(query)
         self.close_connection()
+
+        if df.empty:
+            raise ImportError("No data found for user-defined inputs.")
 
         # Sort data
         df.sort_values(
