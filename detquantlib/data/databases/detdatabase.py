@@ -568,6 +568,17 @@ class DetDatabase:
         return df
 
     def load_commodities(self, columns: list = None, conditions: str = None) -> pd.DataFrame:
+        """
+        General method to load data from the database's commodity table.
+
+        Args:
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
+                all columns.
+            conditions: Optional conditions to add to SQL query. E.g. "WHERE Name='DutchPower'".
+
+        Returns:
+            Table data
+        """
         # Set default column values
         if columns is None:
             columns = ["*"]
@@ -588,6 +599,43 @@ class DetDatabase:
         self.close_connection()
 
         return df
+
+    def get_commodity_info(self, filter_column: str, filter_value: str, info_columns: list) -> dict:
+        """
+        Finds information related to a specific, user-defined commodity.
+
+        Args:
+            filter_column: Column used to filter data for one specific commodity
+            filter_value: Value used to filter data for one specific commodity
+            info_columns: Columns containing the requested information
+
+        Returns:
+            commodity_info: A dictionary containing the requested information
+
+        Raises:
+            ValueError: Raises an error if match with input filter value is not unique
+            ValueError: Raises an error if the input filter value is not found
+        """
+        # Get commodity information for user-defined filtering criteria
+        condition = f"WHERE {filter_column}='{filter_value}'"
+        commodity_info = self.load_commodities(columns=info_columns, conditions=condition)
+
+        # Validate response
+        if commodity_info.shape[0] > 1:
+            raise ValueError(f"More than one match found for {filter_column}={filter_value}.")
+
+        elif commodity_info.shape[0] == 0:
+            available_values = self.load_commodities(columns=[filter_column])
+            available_values_str = ", ".join(f"'{x}'" for x in available_values[filter_column])
+            raise ValueError(
+                f"Value {filter_value} not found in column '{filter_column}'. Available values: "
+                f"{available_values_str}."
+            )
+
+        # Convert dataframe row to dict
+        commodity_info = commodity_info.loc[0, :].to_dict()
+
+        return commodity_info
 
 
 class DetDatabaseDefinitions:
