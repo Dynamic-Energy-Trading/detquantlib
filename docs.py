@@ -3,6 +3,7 @@ import inspect
 import os
 from pathlib import Path
 import sys
+from collections import defaultdict
 
 
 PACKAGE_ROOT = Path(__file__).parent / "detquantlib"  # adjust if needed
@@ -22,17 +23,30 @@ def find_all_init_files(root):
     return [p for p in root.rglob("__init__.py")]
 
 
-def get_exposed_classes_from_module(module):
+def detect_symbol_type(obj):
+    if inspect.ismodule(obj):
+        return "Modules"
+    elif inspect.isclass(obj):
+        return "Classes"
+    elif inspect.isfunction(obj):
+        return "Functions"
+    elif isinstance(obj, (int, float, str, bool, tuple, list, dict, set)):
+        return "Constants"
+    else:
+        return "Others"
+
+
+
+def get_exposed_symbols_from_module(module):
     exposed = getattr(module, "__all__", [])
-    exposed_classes = {}
+    exposed_symbols = {}
     for name in exposed:
         try:
             obj = getattr(module, name)
-            if inspect.isclass(obj):
-                exposed_classes[name] = obj
+            exposed_symbols[name] = obj
         except AttributeError:
             continue
-    return exposed_classes
+    return exposed_symbols
 
 
 def get_class_full_import_path(cls):
@@ -40,13 +54,16 @@ def get_class_full_import_path(cls):
     return module.__name__ if module else None
 
 
-def generate_readme_section(class_imports):
+def generate_readme_section(symbol_imports_by_type):
     lines = []
-    for cls_name, import_paths in sorted(class_imports.items()):
-        lines.append(f"- `{cls_name}`:")
-        for path in sorted(import_paths):
-            lines.append(f"  - `{path}`")
-    return "\n".join(lines) + "\n\n"
+    for symbol_type in sorted(symbol_imports_by_type.keys()):
+        lines.append(f"### {symbol_type}\n")
+        for name, import_paths in sorted(symbol_imports_by_type[symbol_type].items()):
+            lines.append(f"- `{name}`:")
+            for path in sorted(import_paths):
+                lines.append(f"  - `{path}`")
+        lines.append("")  # blank line between types
+    return "\n".join(lines)
 
 
 def update_readme(auto_section_text, readme_path=README_PATH):
@@ -80,7 +97,8 @@ def update_readme(auto_section_text, readme_path=README_PATH):
 
 
 if __name__ == "__main__":
-    class_imports = {}
+
+    symbol_imports_by_type = defaultdict(lambda: defaultdict(set))
 
     init_files = find_all_init_files(PACKAGE_ROOT)
 
@@ -97,20 +115,20 @@ if __name__ == "__main__":
             print(f"⚠️ Could not import {module_name}: {e}")
             continue
 
-        exposed_classes = get_exposed_classes_from_module(module)
+        exposed_symbols = get_exposed_symbols_from_module(module)
 
-        for cls_name, cls_obj in exposed_classes.items():
-            full_module = get_class_full_import_path(cls_obj)
+        for name, obj in exposed_symbols.items():
+            full_module = inspect.getmodule(obj)
             if not full_module:
                 continue
-            top_level_import = f"from {module_name} import {cls_name}"
-            full_path_import = f"from {full_module} import {cls_name}"
+            full_module_name = full_module.__name__
 
-            if cls_name not in class_imports:
-                class_imports[cls_name] = set()
+            top_level_import = f"from {module_name} import {name}"
+            full_path_import = f"from {full_module_name} import {name}"
 
-            class_imports[cls_name].update({top_level_import, full_path_import})
+            symbol_type = detect_symbol_type(obj)
+            symbol_imports_by_type[symbol_type][name].update({top_level_import, full_path_import})
 
-    section = generate_readme_section(class_imports)
+    section = generate_readme_section(symbol_imports_by_type)
     update_readme(section)
     print("✅ README updated with exposed classes from all __init__.py files.")
