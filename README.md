@@ -24,10 +24,31 @@
 
 <!--TOC-->
 
-## General overview
+## Overview
 
 The DET Quant Library is an internal library containing functions and classes that can be used
 across Quant models.
+
+## Exposed classes
+
+Some of the package's classes are exposed via `__init__.py` files. They can therefore be 
+imported with a more concise notation that does not require specifying the full path to the 
+class. This section references all exposed classes, and for each one of them, provides an 
+exhaustive list of the ways they can be imported.
+
+List of exposed classes:
+
+<!-- BEGIN AUTO-GENERATED -->
+- `DetDatabase`:
+  - `from detquantlib.data import DetDatabase`
+  - `from detquantlib.data.databases.detdatabase import DetDatabase`
+- `Entsoe`:
+  - `from detquantlib.data import Entsoe`
+  - `from detquantlib.data.entsoe.entsoe import Entsoe`
+- `Sftp`:
+  - `from detquantlib.data import Sftp`
+  - `from detquantlib.data.sftp.sftp import Sftp`
+<!-- END AUTO-GENERATED -->
 
 ## Configuration
 
