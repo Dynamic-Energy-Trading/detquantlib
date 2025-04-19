@@ -29,16 +29,20 @@
 The DET Quant Library is an internal library containing functions and classes that can be used
 across Quant models.
 
-## Exposed classes
+## Exposed symbols
 
-Some of the package's classes are exposed via `__init__.py` files. They can therefore be 
-imported with a more concise notation that does not require specifying the full path to the 
-class. This section references all exposed classes, and for each one of them, provides an 
-exhaustive list of the ways they can be imported.
+Some of the package's symbols (i.e. functions, classes, modules, etc.) are exposed via 
+`__init__.py` files. They can therefore be imported with a more concise notation that does not 
+require specifying their full path.
 
-List of exposed classes:
+This section references all exposed symbols, and for each one of them, provides an exhaustive 
+list of the ways they can be imported.
 
-<!-- BEGIN AUTO-GENERATED -->
+#### List of exposed symbols
+
+<!-- START EXPOSED SYMBOLS AUTO-GENERATED -->
+Classes:
+
 - `DetDatabase`:
   - `from detquantlib.data import DetDatabase`
   - `from detquantlib.data.databases.detdatabase import DetDatabase`
@@ -48,7 +52,22 @@ List of exposed classes:
 - `Sftp`:
   - `from detquantlib.data import Sftp`
   - `from detquantlib.data.sftp.sftp import Sftp`
-<!-- END AUTO-GENERATED -->
+
+Modules:
+
+- `dates`:
+  - `from detquantlib import dates`
+  - `from detquantlib.dates.dates import dates`
+<!-- END EXPOSED SYMBOLS AUTO-GENERATED -->
+
+==============
+
+Note: The list above is auto-generated and can be udpated with the following command in the 
+terminal:
+
+```cmd
+poetry run python docs.py
+```
 
 ## Configuration
 
