@@ -40,6 +40,13 @@ require specifying their full path.
 This section references all exposed symbols, and for each one of them, provides an exhaustive
 list of the ways they can be imported.
 
+Note: The list below is auto-generated and can be udpated with the following command in the
+terminal:
+
+```cmd
+poetry run python docs.py
+```
+
 #### List of exposed symbols
 
 <!-- START EXPOSED SYMBOLS AUTO-GENERATED -->
@@ -57,15 +64,6 @@ Classes:
   - `from detquantlib.data.sftp.sftp import Sftp`
 
 <!-- END EXPOSED SYMBOLS AUTO-GENERATED -->
-
-==============
-
-Note: The list above is auto-generated and can be udpated with the following command in the
-terminal:
-
-```cmd
-poetry run python docs.py
-```
 
 ## Configuration
 
