@@ -47,7 +47,7 @@ terminal:
 poetry run python docs.py
 ```
 
-#### List of exposed symbols
+### List of exposed symbols
 
 <!-- START EXPOSED SYMBOLS AUTO-GENERATED -->
 
