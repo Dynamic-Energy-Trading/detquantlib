@@ -43,6 +43,7 @@ list of the ways they can be imported.
 #### List of exposed symbols
 
 <!-- START EXPOSED SYMBOLS AUTO-GENERATED -->
+
 Classes:
 
 - `DetDatabase`:
@@ -54,6 +55,7 @@ Classes:
 - `Sftp`:
   - `from detquantlib.data import Sftp`
   - `from detquantlib.data.sftp.sftp import Sftp`
+
 <!-- END EXPOSED SYMBOLS AUTO-GENERATED -->
 
 ==============

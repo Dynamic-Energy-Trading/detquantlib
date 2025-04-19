@@ -169,16 +169,22 @@ def update_readme(auto_section_text: str, readme_path: Path = README_PATH):
         if start_marker in content and end_marker in content:
             start = content.index(start_marker) + len(start_marker)
             end = content.index(end_marker)
-            new_content = content[:start] + "\n" + auto_section_text.strip() + "\n" + content[end:]
+            new_content = (
+                    content[:start]
+                    + "\n\n"  # blank line after start marker
+                    + auto_section_text.strip()
+                    + "\n\n"  # blank line before end marker
+                    + content[end:]
+            )
         else:
             # If the markers don't exist, append the section
             new_content = (
                 content.strip()
                 + "\n\n## Exposed symbols\n\n#### List of exposed symbols\n\n"
                 + start_marker
-                + "\n"
+                + "\n\n"
                 + auto_section_text.strip()
-                + "\n"
+                + "\n\n"
                 + end_marker
             )
 
