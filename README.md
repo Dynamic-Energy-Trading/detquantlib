@@ -52,12 +52,6 @@ Classes:
 - `Sftp`:
   - `from detquantlib.data import Sftp`
   - `from detquantlib.data.sftp.sftp import Sftp`
-
-Modules:
-
-- `dates`:
-  - `from detquantlib import dates`
-  - `from detquantlib.dates.dates import dates`
 <!-- END EXPOSED SYMBOLS AUTO-GENERATED -->
 
 ==============
