@@ -1,9 +1,9 @@
 import importlib.util
 import inspect
-from pathlib import Path
 import sys
 from collections import defaultdict
-
+from pathlib import Path
+from types import ModuleType
 
 PROJECT_ROOT = Path.cwd()
 PACKAGE_NAME = "detquantlib"
@@ -12,6 +12,9 @@ README_PATH = PROJECT_ROOT.joinpath("README.md")
 
 
 def main():
+    """
+    Main function to auto-generate the list of exposed symbols and add it to the README.md file.
+    """
     symbol_imports_by_type = defaultdict(lambda: defaultdict(set))
 
     # Find all init files in package
@@ -51,12 +54,31 @@ def main():
     print("✅ README updated with exposed symbols from all __init__.py files.")
 
 
-def find_all_init_files(root):
+def find_all_init_files(root: Path) -> list:
+    """
+    Recursively finds all __init__.py files under the given root path.
+
+    Args:
+        root: Root directory to search
+
+    Returns:
+        List of paths to __init__.py files
+    """
     init_files = [f for f in root.rglob("__init__.py")]
     return init_files
 
 
-def load_module_from_file(module_name, file_path):
+def load_module_from_file(module_name: str, file_path: Path) -> ModuleType:
+    """
+    Dynamically loads a Python module from a given file path.
+
+    Args:
+        module_name: Module name
+        file_path: Path to the Python file
+
+    Returns:
+        The loaded module object
+    """
     spec = importlib.util.spec_from_file_location(module_name, str(file_path))
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
@@ -64,7 +86,16 @@ def load_module_from_file(module_name, file_path):
     return module
 
 
-def get_exposed_symbols_from_module(module):
+def get_exposed_symbols_from_module(module: ModuleType) -> dict:
+    """
+    Extracts all symbols listed in __all__ from the given module.
+
+    Args:
+        module: The imported module object
+
+    Returns:
+        Mapping of symbol names to their objects
+    """
     exposed_names = getattr(module, "__all__", [])
     exposed_symbols = dict()
     for name in exposed_names:
@@ -76,7 +107,16 @@ def get_exposed_symbols_from_module(module):
     return exposed_symbols
 
 
-def detect_symbol_type(obj):
+def detect_symbol_type(obj: ModuleType) -> str:
+    """
+    Determines the type category of a given symbol.
+
+    Args:
+        obj: Symbol
+
+    Returns:
+        Symbol type
+    """
     if inspect.ismodule(obj):
         symbol_type = "Modules"
     elif inspect.isclass(obj):
@@ -90,7 +130,16 @@ def detect_symbol_type(obj):
     return symbol_type
 
 
-def generate_readme_section(symbol_imports_by_type):
+def generate_readme_section(symbol_imports_by_type: dict) -> str:
+    """
+    Formats the exposed symbols into a structured markdown section.
+
+    Args:
+        symbol_imports_by_type: Mapping from symbol type → symbol name → set of import paths
+
+    Returns:
+        Markdown-formatted string to inject into the README.md
+    """
     lines = []
     for symbol_type in sorted(symbol_imports_by_type.keys()):
         lines.append(f"{symbol_type}:\n")
@@ -103,7 +152,14 @@ def generate_readme_section(symbol_imports_by_type):
     return auto_section_text
 
 
-def update_readme(auto_section_text, readme_path=README_PATH):
+def update_readme(auto_section_text: str, readme_path: Path = README_PATH):
+    """
+    Inserts or updates the auto-generated section of the README.md file between markers.
+
+    Args:
+        auto_section_text: Markdown content to insert
+        readme_path: Path to the README.md file
+    """
     start_marker = "<!-- START EXPOSED SYMBOLS AUTO-GENERATED -->"
     end_marker = "<!-- END EXPOSED SYMBOLS AUTO-GENERATED -->"
 
@@ -113,19 +169,17 @@ def update_readme(auto_section_text, readme_path=README_PATH):
         if start_marker in content and end_marker in content:
             start = content.index(start_marker) + len(start_marker)
             end = content.index(end_marker)
-            new_content = (
-                content[:start] + "\n" + auto_section_text.strip() + "\n" + content[end:]
-            )
+            new_content = content[:start] + "\n" + auto_section_text.strip() + "\n" + content[end:]
         else:
             # If the markers don't exist, append the section
             new_content = (
-                    content.strip()
-                    + "\n\n## Exposed symbols\n\n#### List of exposed symbols\n\n"
-                    + start_marker
-                    + "\n"
-                    + auto_section_text.strip()
-                    + "\n"
-                    + end_marker
+                content.strip()
+                + "\n\n## Exposed symbols\n\n#### List of exposed symbols\n\n"
+                + start_marker
+                + "\n"
+                + auto_section_text.strip()
+                + "\n"
+                + end_marker
             )
 
         f.seek(0)
