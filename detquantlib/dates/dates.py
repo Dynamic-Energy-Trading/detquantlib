@@ -78,8 +78,8 @@ def calc_months_diff(
                 date and end date, irrespective of the day. For example, suppose that start date
                 is 15-Jan-2025 and end date is 3-Mar-2025. Then, the month difference between
                 Jan-2025 and Mar-2025 is 2.
-            - diff_method="time": Counts the month difference, accounting the day and time of the
-                start and end dates. For example:
+            - diff_method="time": Counts the month difference, accounting for the day and time
+                of the start and end dates. For example:
                 - Suppose that start date is 15-Jan-2025 and end date is 3-Mar-2025. Then:
                     - start date + 1 months = 15-Feb-2025
                     - start date + 2 months = 15-Mar-2025
@@ -103,7 +103,7 @@ def calc_months_diff(
         ValueError: Raises an error when the input argument 'diff_method' is invalid
     """
     # Input validation
-    if end_date < start_date:
+    if end_date < start_date and diff_method != "month":
         raise ValueError("End date cannot be smaller than start date.")
 
     # Calculate month difference
