@@ -34,13 +34,6 @@ def convert_delivery_start_date_to_maturity(
     # Make input product string lower case only
     product = product.lower()
 
-    # Validate input dates
-    if delivery_start_date < trading_date:
-        raise ValueError(
-            "Input argument 'delivery_start_date' cannot be smaller than input argument "
-            "'trading_date'."
-        )
-
     if product == "month":
         maturity = calc_months_diff(
             start_date=trading_date,
@@ -49,13 +42,13 @@ def convert_delivery_start_date_to_maturity(
         )
 
     elif product == "quarter":
-        quarter = pd.Timestamp(trading_date).quarter
-        year_start_date = datetime(trading_date.year, 1, 1)
-        trading_quarter_start_date = year_start_date + relativedelta(months=((quarter - 1) * 3))
+        trading_quarter_start_date = convert_maturity_to_delivery_start_date(
+            trading_date=trading_date, maturity=0, product="quarter"
+        )
 
-        quarter = pd.Timestamp(delivery_start_date).quarter
-        year_start_date = datetime(delivery_start_date.year, 1, 1)
-        delivery_quarter_start_date = year_start_date + relativedelta(months=((quarter - 1) * 3))
+        delivery_quarter_start_date = convert_maturity_to_delivery_start_date(
+            trading_date=delivery_start_date, maturity=0, product="quarter"
+        )
 
         months_diff = calc_months_diff(
             start_date=trading_quarter_start_date,
