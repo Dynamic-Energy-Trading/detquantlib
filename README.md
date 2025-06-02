@@ -5,24 +5,25 @@
 <!--TOC-->
 
 - [DET Quant Library](#det-quant-library)
-  - [Table of contents](#table-of-contents)
+  - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
-  - [Exposed symbols](#exposed-symbols)
-    - [List of exposed symbols](#list-of-exposed-symbols)
+  - [Exposed Symbols](#exposed-symbols)
+    - [List of Exposed Symbols](#list-of-exposed-symbols)
   - [Configuration](#configuration)
+    - [Project Structure](#project-structure)
     - [Dependencies](#dependencies)
-      - [Dependency manager](#dependency-manager)
+      - [Dependency Manager](#dependency-manager)
       - [Dependabot](#dependabot)
-    - [GitHub actions](#github-actions)
-      - [Workflow: Continuous integration (CI)](#workflow-continuous-integration-ci)
-        - [Invoke tasks](#invoke-tasks)
-        - [CI check: Testing](#ci-check-testing)
-        - [CI check: Code formatting](#ci-check-code-formatting)
-      - [Workflow: Package publisher](#workflow-package-publisher)
-        - [Checking version updates](#checking-version-updates)
-        - [Creating version tags](#creating-version-tags)
-        - [Publishing package updates to PyPI](#publishing-package-updates-to-pypi)
-    - [Release notes](#release-notes)
+    - [GitHub Actions](#github-actions)
+      - [Workflow: Continuous Integration (CI)](#workflow-continuous-integration-ci)
+        - [Invoke Tasks](#invoke-tasks)
+        - [CI Check: Testing](#ci-check-testing)
+        - [CI Check: Code Formatting](#ci-check-code-formatting)
+      - [Workflow: Package Publisher](#workflow-package-publisher)
+        - [Checking Version Updates](#checking-version-updates)
+        - [Creating Version Tags](#creating-version-tags)
+        - [Publishing Package Updates to PyPI](#publishing-package-updates-to-pypi)
+    - [Release Notes](#release-notes)
 
 <!--TOC-->
 
@@ -31,7 +32,7 @@
 The DET Quant Library is an internal library containing functions and classes that can be used
 across Quant models.
 
-## Exposed symbols
+## Exposed Symbols
 
 Some of the package's symbols (i.e. functions, classes, modules, etc.) are exposed via
 `__init__.py` files. They can therefore be imported with a more concise notation that does not
@@ -47,7 +48,7 @@ terminal:
 poetry run python docs.py
 ```
 
-### List of exposed symbols
+### List of Exposed Symbols
 
 <!-- START EXPOSED SYMBOLS AUTO-GENERATED -->
 
@@ -67,13 +68,9 @@ Classes:
 
 ## Configuration
 
-### Dependencies
+### Project Structure
 
-#### Dependency manager
-
-Project dependencies are managed by [Poetry](https://python-poetry.org/).
-
-The project follows the standard Poetry structure:
+The project mainly follows the standard Poetry structure:
 
 ```
 detquantlib
@@ -85,17 +82,23 @@ detquantlib
     └── __init__.py
 ```
 
+### Dependencies
+
+#### Dependency Manager
+
+Project dependencies are managed by [Poetry](https://python-poetry.org/).
+
 #### Dependabot
 
 Automated dependency updates are executed with
 [Dependabot](https://docs.github.com/en/code-security/dependabot).
 
-### GitHub actions
+### GitHub Actions
 
 The project's CI/CD pipeline is enforced with [GitHub actions](https://docs.github.com/en/actions)
 workflows.
 
-#### Workflow: Continuous integration (CI)
+#### Workflow: Continuous Integration (CI)
 
 The continuous integration (CI) workflow runs tests to check the integrity of the codebase's
 content, and linters to check the consistency of its format.
@@ -107,7 +110,7 @@ The workflow was inspired by the following preconfigured templates:
 - [Poetry action](https://github.com/marketplace/actions/install-poetry-action): A GitHub action
   for installing and configuring Poetry.
 
-##### Invoke tasks
+##### Invoke Tasks
 
 The workflow's checks and linters are specified with [Invoke](https://www.pyinvoke.org/) tasks,
 defined in a tasks.py file.
@@ -127,7 +130,7 @@ Use the `-h` (or `--help`) argument for help about a particular Invoke task. For
 inv lint -h
 ```
 
-##### CI check: Testing
+##### CI Check: Testing
 
 Code changes are tested with the [Pytest](https://github.com/pytest-dev/pytest) package.
 
@@ -137,7 +140,7 @@ The CI check is executed with the following Invoke task:
 inv test -c
 ```
 
-##### CI check: Code formatting
+##### CI Check: Code Formatting
 
 Linters are used to check that the code is properly formatted:
 
@@ -162,12 +165,12 @@ This command fixes the parts of the code that should be reformatted. Adding the 
 `--check`) optional argument instructs the command to only _check_ if parts of the code should be
 reformatted, without applying any actual changes.
 
-#### Workflow: Package publisher
+#### Workflow: Package Publisher
 
 The package publisher workflow checks the validity of package version updates, creates version
 tags, and publishes package updates to PyPI.
 
-##### Checking version updates
+##### Checking Version Updates
 
 The workflow enforces version control:
 
@@ -179,17 +182,17 @@ The workflow enforces version control:
   - `Y` increments represent minor, backward compatible functionality updates.
   - `Z` increments represent patch/bugfix, backward compatible updates.
 
-##### Creating version tags
+##### Creating Version Tags
 
 If the new package version is valid, the workflow automatically creates a new tag for every new
 master commit.
 
-##### Publishing package updates to PyPI
+##### Publishing Package Updates to PyPI
 
 The workflow automatically publishes every new master commit to
 [PyPI](https://pypi.org/project/detquantlib/).
 
-### Release notes
+### Release Notes
 
 When deemed necessary (especially in case of major updates), developers can document code
 changes in dedicated GitHub release notes.
