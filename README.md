@@ -1,6 +1,6 @@
 # DET Quant Library
 
-## Table of contents
+## Table of Contents
 
 <!--TOC-->
 
