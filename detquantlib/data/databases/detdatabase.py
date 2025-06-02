@@ -639,6 +639,71 @@ class DetDatabase:
 
         return commodity_info
 
+    def load_account_positions(
+        self,
+        start_trading_date: datetime,
+        end_trading_date: datetime,
+        columns: list = None,
+    ) -> pd.DataFrame:
+        """
+        Loads account positions from the database, over a user-defined range of trading dates.
+
+        Args:
+            start_trading_date: Start trading date
+            end_trading_date: End trading date
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
+                all columns.
+
+        Returns:
+            Dataframe containing quarterly account positions
+
+        Raises:
+            ValueError: Raises an error if no account position data is found for user inputs
+        """
+        # Set default column values
+        if columns is None:
+            columns = ["*"]
+
+        # Convert columns from list to string
+        if len(columns) == 1:
+            columns_str = str(columns[0])
+        else:
+            columns_str = f"[{'], ['.join(columns)}]"
+
+        # Convert dates from datetime to string
+        start_trading_date_str = start_trading_date.strftime("%Y-%m-%d")
+        end_trading_date_str = end_trading_date.strftime("%Y-%m-%d")
+
+        # Create query
+        table = DetDatabaseDefinitions.DEFINITIONS["table_name_account_position"]
+        query = (
+            f"SELECT {columns_str} FROM {table} "
+            f"WHERE CAST ([InsertionTimestamp] AS DATE) IN ('{start_trading_date_str}', "
+            f"'{end_trading_date_str}') "
+        )
+
+        # Query db
+        self.open_connection()
+        df = self.query_db(query)
+        self.close_connection()
+
+        if df.empty:
+            raise ValueError("No account position data found for user-defined inputs.")
+
+        # Sort data
+        df.sort_values(
+            by=["InsertionTimestamp"],
+            axis=0,
+            ascending=True,
+            inplace=True,
+            ignore_index=True,
+        )
+
+        # Convert dates from datetime.date to pd.Timestamp
+        df["InsertionTimestamp"] = pd.DatetimeIndex(df["InsertionTimestamp"])
+
+        return df
+
 
 class DetDatabaseDefinitions:
     """A class containing some hard-coded definitions related to the DET database."""
@@ -648,4 +713,5 @@ class DetDatabaseDefinitions:
         table_name_entsoe_day_ahead_spot_price="[ENTSOE].[DayAheadSpotPrice]",
         table_name_entsoe_imbalance_price="[ENTSOE].[ImbalancePrice]",
         table_name_futures_eod_settlement_price="[VW].[EODSettlementPrice]",
+        table_name_account_position="[TT].[AccountPosition]",
     )
