@@ -60,6 +60,15 @@ Classes:
 - `Entsoe`:
   - `from detquantlib.data import Entsoe`
   - `from detquantlib.data.entsoe.entsoe import Entsoe`
+- `OutputItem`:
+  - `from detquantlib.outputs import OutputItem`
+  - `from detquantlib.outputs.outputs_interface import OutputItem`
+- `OutputSet`:
+  - `from detquantlib.outputs import OutputSet`
+  - `from detquantlib.outputs.outputs_interface import OutputSet`
+- `PathDefinitions`:
+  - `from detquantlib.outputs import PathDefinitions`
+  - `from detquantlib.outputs.outputs_interface import PathDefinitions`
 - `Sftp`:
   - `from detquantlib.data import Sftp`
   - `from detquantlib.data.sftp.sftp import Sftp`
