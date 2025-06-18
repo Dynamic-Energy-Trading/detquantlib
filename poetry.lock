@@ -801,14 +801,14 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pymarkdownlnt"
-version = "0.9.29"
+version = "0.9.30"
 description = "A GitHub Flavored Markdown compliant Markdown linter."
 optional = false
 python-versions = ">=3.9.0"
 groups = ["dev"]
 files = [
-    {file = "pymarkdownlnt-0.9.29-py3-none-any.whl", hash = "sha256:8492992c75c94d1d6dd64a8c49c8ce63a171bffb45a2a054235440fe30ebdb34"},
-    {file = "pymarkdownlnt-0.9.29.tar.gz", hash = "sha256:cfa37fe778fbaa11714bcc617e90f7293c628cfadce9c2ec3ea89d9b24aca086"},
+    {file = "pymarkdownlnt-0.9.30-py3-none-any.whl", hash = "sha256:29b881434def9d3796be4a89cb277ab9f8f4fbb558379ce7836c653c9c351d2c"},
+    {file = "pymarkdownlnt-0.9.30.tar.gz", hash = "sha256:cf274935b128abd7f30c44314510d0f4d36965149bb9dae84f6cac9491dc1f58"},
 ]
 
 [package.dependencies]
