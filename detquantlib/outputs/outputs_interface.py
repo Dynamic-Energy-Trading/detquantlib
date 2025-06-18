@@ -12,7 +12,7 @@ class OutputItem:
     """A class to easily manage, store and export a model output."""
 
     def __init__(
-            self, data=None, filename: str = None, extension: str = None, sub_path: str = None
+        self, data=None, filename: str = None, extension: str = None, sub_path: str = None
     ):
         """
         Constructor method.
