@@ -1,4 +1,5 @@
 # Python built-in packages
+import math
 from datetime import datetime
 from typing import Literal
 
@@ -13,7 +14,7 @@ from detquantlib.dates.dates import calc_months_diff
 def convert_delivery_start_date_to_maturity(
     trading_date: datetime,
     delivery_start_date: datetime,
-    product: Literal["month", "quarter", "year"],
+    product: Literal["day", "weekend", "week", "month", "quarter", "year"],
 ) -> int:
     """
     Calculates the number of maturities between the input trading date and the input delivery
@@ -34,7 +35,16 @@ def convert_delivery_start_date_to_maturity(
     # Make input product string lower case only
     product = product.lower()
 
-    if product == "month":
+    if product == "day":
+        maturity = (delivery_start_date - trading_date).days
+
+    elif product == "week":
+        maturity = math.ceil((delivery_start_date - trading_date).ceil("D").days / 7)
+
+    elif product == "weekend":
+        maturity = math.ceil((delivery_start_date - trading_date).ceil("D").days / 7)
+
+    elif product == "month":
         maturity = calc_months_diff(
             start_date=trading_date,
             end_date=delivery_start_date,
