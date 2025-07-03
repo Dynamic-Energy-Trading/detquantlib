@@ -655,7 +655,7 @@ class DetDatabase:
                 all columns.
 
         Returns:
-            Dataframe containing quarter-hourly account positions.
+            Dataframe containing account positions.
 
         Raises:
             ValueError: Raises an error if no position data is found for user inputs.
@@ -707,7 +707,7 @@ class DetDatabase:
 
     def load_instruments(
         self,
-        identifiers: pd.Series,
+        identifiers: list,
         columns: list = None,
     ) -> pd.DataFrame:
         """
@@ -735,7 +735,7 @@ class DetDatabase:
             columns_str = f"[{'], ['.join(columns)}]"
 
         # Convert tenors from list to string
-        identifiers_str = ", ".join(f"'{i}'" for i in identifiers.tolist())
+        identifiers_str = ", ".join(f"'{i}'" for i in identifiers)
 
         # Create query
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_instruments"]
@@ -754,7 +754,7 @@ class DetDatabase:
 
     def load_eex_eod_prices(
         self,
-        product_format: str,
+        product_code: str,
         start_trading_date: datetime,
         end_trading_date: datetime,
         columns: list = None,
@@ -764,7 +764,7 @@ class DetDatabase:
         dates.
 
         Args:
-            product_format: Product code format indicating commodity, tenor and delivery type as
+            product_code: Product code format indicating commodity, tenor and delivery type as
                 defined in the EEX.EODPrice DET database. Assumed product code format do not
                 include other product code format (i.e. DEBW and DEBWE do not co-exist)
             start_trading_date: Start trading date.
@@ -802,7 +802,7 @@ class DetDatabase:
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_eex_eod_price"]
         query = (
             f"SELECT {columns_str} FROM {table} "
-            f"WHERE [Product] LIKE '{product_format}' "
+            f"WHERE [Product] LIKE '{product_code}' "
             f"AND CAST ([TradingDate] AS DATE) BETWEEN '{start_trading_date_str}' AND "
             f"'{end_trading_date_str}'"
         )
