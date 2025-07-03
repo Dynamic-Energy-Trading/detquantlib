@@ -707,14 +707,14 @@ class DetDatabase:
 
     def load_instruments(
         self,
-        identifier: str,
+        identifiers: pd.Series,
         columns: list = None,
     ) -> pd.DataFrame:
         """
         Loads instrument data based on identifier (of account positions) from the database.
 
         Args:
-            identifier: Instrument identifier (of account positions).
+            identifiers: Instrument identifiers (of account positions).
             columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
                 all columns.
 
@@ -734,9 +734,12 @@ class DetDatabase:
         else:
             columns_str = f"[{'], ['.join(columns)}]"
 
+        # Convert tenors from list to string
+        identifiers_str = ", ".join(f"'{i}'" for i in identifiers.tolist())
+
         # Create query
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_instruments"]
-        query = f"SELECT {columns_str} FROM {table} WHERE [id] IN ({identifier})"
+        query = f"SELECT {columns_str} FROM {table} WHERE [id] IN ({identifiers_str})"
 
         # Query db
         self.open_connection()
