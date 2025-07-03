@@ -649,16 +649,16 @@ class DetDatabase:
         Loads account positions from the database, over a user-defined range of trading dates.
 
         Args:
-            start_trading_date: Start trading date
-            end_trading_date: End trading date
+            start_trading_date: Start trading date.
+            end_trading_date: End trading date.
             columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
                 all columns.
 
         Returns:
-            Dataframe containing quarterly account positions
+            Dataframe containing account positions.
 
         Raises:
-            ValueError: Raises an error if no account position data is found for user inputs
+            ValueError: Raises an error if no position data is found for user inputs.
         """
         # Set default column values
         if columns is None:
@@ -678,8 +678,8 @@ class DetDatabase:
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_account_position"]
         query = (
             f"SELECT {columns_str} FROM {table} "
-            f"WHERE CAST ([InsertionTimestamp] AS DATE) IN ('{start_trading_date_str}', "
-            f"'{end_trading_date_str}') "
+            f"WHERE CAST ([InsertionTimestamp] AS DATE) BETWEEN '{start_trading_date_str}' AND "
+            f"'{end_trading_date_str}'"
         )
 
         # Query db
@@ -687,6 +687,7 @@ class DetDatabase:
         df = self.query_db(query)
         self.close_connection()
 
+        # Assert data
         if df.empty:
             raise ValueError("No account position data found for user-defined inputs.")
 
@@ -704,6 +705,136 @@ class DetDatabase:
 
         return df
 
+    def load_instruments(
+        self,
+        identifiers: list,
+        columns: list = None,
+    ) -> pd.DataFrame:
+        """
+        Loads instrument data based on identifier (of account positions) from the database.
+
+        Args:
+            identifiers: Instrument identifiers (of account positions).
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
+                all columns.
+
+        Returns:
+            Dataframe containing instrument data.
+
+        Raises:
+            ValueError: Raises an error if no instrument data is found for user inputs.
+        """
+        # Set default column values
+        if columns is None:
+            columns = ["*"]
+
+        # Convert columns from list to string
+        if len(columns) == 1:
+            columns_str = str(columns[0])
+        else:
+            columns_str = f"[{'], ['.join(columns)}]"
+
+        # Convert tenors from list to string
+        identifiers_str = ", ".join(f"'{i}'" for i in identifiers)
+
+        # Create query
+        table = DetDatabaseDefinitions.DEFINITIONS["table_name_instruments"]
+        query = f"SELECT {columns_str} FROM {table} WHERE [id] IN ({identifiers_str})"
+
+        # Query db
+        self.open_connection()
+        df = self.query_db(query)
+        self.close_connection()
+
+        # Assert data
+        if df.empty:
+            raise ValueError("No instrument data found for user-defined inputs.")
+
+        return df
+
+    def load_eex_eod_prices(
+        self,
+        product_code: str,
+        start_trading_date: datetime,
+        end_trading_date: datetime,
+        columns: list = None,
+    ) -> pd.DataFrame:
+        """
+        Loads futures end-of-day EEX prices from the database, over a user-defined range of trading
+        dates.
+
+        Args:
+            product_code: Product code format indicating commodity, tenor and delivery type as
+                defined in the EEX.EODPrice DET database. Assumed product code format do not
+                include other product code format (i.e. DEBW and DEBWE do not co-exist)
+            start_trading_date: Start trading date.
+            end_trading_date: End trading date.
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
+                all columns.
+
+        Returns:
+            Dataframe containing EEX futures end-of-day prices.
+
+        Raises:
+            ValueError: Raises an error if no price data is found for user inputs.
+        """
+        # Set default column values
+        if columns is None:
+            columns = ["*"]
+        else:
+            # Assert required columns
+            columns = list(
+                set(columns)
+                | {"TradingDate", "Product", "Delivery Start", "Delivery End", "Settlement Price"}
+            )
+
+        # Convert columns from list to string
+        if len(columns) == 1:
+            columns_str = str(columns[0])
+        else:
+            columns_str = f"[{'], ['.join(columns)}]"
+
+        # Convert dates from datetime to string
+        start_trading_date_str = start_trading_date.strftime("%Y-%m-%d")
+        end_trading_date_str = end_trading_date.strftime("%Y-%m-%d")
+
+        # Create query
+        table = DetDatabaseDefinitions.DEFINITIONS["table_name_eex_eod_price"]
+        query = (
+            f"SELECT {columns_str} FROM {table} "
+            f"WHERE [Product] LIKE '{product_code}' "
+            f"AND CAST ([TradingDate] AS DATE) BETWEEN '{start_trading_date_str}' AND "
+            f"'{end_trading_date_str}'"
+        )
+
+        # Query db
+        self.open_connection()
+        df = self.query_db(query)
+        self.close_connection()
+
+        # Assert data
+        if df.empty:
+            raise ValueError("No price data found for user-defined inputs.")
+
+        # Sort data
+        df.sort_values(
+            by=["TradingDate", "Delivery Start", "Delivery End"],
+            axis=0,
+            ascending=True,
+            inplace=True,
+            ignore_index=True,
+        )
+
+        # Convert dates from datetime.date to pd.Timestamp
+        df["TradingDate"] = pd.DatetimeIndex(df["TradingDate"])
+        df["Delivery Start"] = pd.DatetimeIndex(df["Delivery Start"])
+        df["Delivery End"] = pd.DatetimeIndex(df["Delivery End"])
+
+        # Drop duplicates
+        df = df.drop_duplicates()
+
+        return df
+
 
 class DetDatabaseDefinitions:
     """A class containing some hard-coded definitions related to the DET database."""
@@ -714,4 +845,6 @@ class DetDatabaseDefinitions:
         table_name_entsoe_imbalance_price="[ENTSOE].[ImbalancePrice]",
         table_name_futures_eod_settlement_price="[VW].[EODSettlementPrice]",
         table_name_account_position="[TT].[AccountPosition]",
+        table_name_instruments="[TT].[Instrument]",
+        table_name_eex_eod_price="[EEX].[EODPrice]",
     )
