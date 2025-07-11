@@ -12,7 +12,12 @@ class OutputItem:
     """A class to easily manage, store and export a model output."""
 
     def __init__(
-        self, data=None, filename: str = None, extension: str = None, sub_path: str = None
+        self,
+        data=None,
+        filename: str = None,
+        extension: str = None,
+        sub_path: str = None,
+        export_options: dict = None,
     ):
         """
         Constructor method.
@@ -23,11 +28,13 @@ class OutputItem:
             extension: File extension to be used when exporting the output data
             sub_path: Within the output base directory, indicates the sub-path (if any) of the
                 folder where the output data should be exported
+            export_options: Additional options for the function exporting the output data to a file
         """
         self.data = data
         self.filename = filename
         self.extension = extension
         self.sub_path = sub_path
+        self.export_options = dict() if export_options is None else export_options
 
     def export_to_file(self, folder_dir: Path = None):
         """
@@ -74,7 +81,7 @@ class OutputItem:
         """
         data_type = type(self.data)
         if data_type is pd.DataFrame:
-            self.data.to_csv(file_dir, sep=",", index=False)
+            self.data.to_csv(file_dir, **self.export_options)
         else:
             raise TypeError(f"Exporting data type {data_type} to csv file is not supported.")
 
@@ -91,7 +98,7 @@ class OutputItem:
         data_type = type(self.data)
         if data_type is dict:
             with open(file_dir, "w") as f:
-                json.dump(self.data, f, indent=4)
+                json.dump(self.data, f, indent=4, **self.export_options)
         else:
             raise TypeError(f"Exporting data type {data_type} to json file is not supported.")
 
@@ -107,7 +114,7 @@ class OutputItem:
         """
         data_type = type(self.data)
         if data_type is go.Figure:
-            self.data.write_html(file_dir)
+            self.data.write_html(file_dir, **self.export_options)
         else:
             raise TypeError(f"Exporting data type {data_type} to html file is not supported.")
 
@@ -123,7 +130,7 @@ class OutputItem:
         """
         data_type = type(self.data)
         if data_type is np.ndarray:
-            np.savez_compressed(file_dir, data=self.data)
+            np.savez_compressed(file_dir, data=self.data, **self.export_options)
         else:
             raise TypeError(f"Exporting data type {data_type} to npz file is not supported.")
 
