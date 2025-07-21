@@ -969,8 +969,10 @@ class DetDatabase:
             df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_localize(None)
             df[datetime_column_name] = df[datetime_column_name].dt.tz_localize(None)
 
-        # Convert dates from string to pd.Timestamp
-        df["ForecastDate"] = df["ForecastDate"].apply(pd.Timestamp)
+        # Convert dates from datetime.date to pd.Timestamp
+        df["InsertionTimestamp"] = pd.DatetimeIndex(df["InsertionTimestamp"])
+        df["ForecastDate"] = pd.DatetimeIndex(df["ForecastDate"])
+        df[f"DateTime({timezone})"] = pd.DatetimeIndex(df[f"DateTime({timezone})"])
 
         # Drop duplicates
         df = df.drop_duplicates()
@@ -979,7 +981,7 @@ class DetDatabase:
         df["kWh"] = df["kWh"]/1000
 
         # Rename columns
-        df = df.rename(columns={"kWh": "Volume(MWh)", f"Datetime({timezone})": "DeliveryStart"})
+        df = df.rename(columns={"kWh": "Volume(MWh)", f"DateTime({timezone})": "DeliveryStart"})
 
         # Drop columns
         df = df.drop("Datetime", axis=1)
