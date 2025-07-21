@@ -1008,7 +1008,7 @@ class DetDatabase:
         df = df.drop_duplicates()
 
         # Rescale column values
-        df["kWh"] = df["kWh"]/1000
+        df["kWh"] = df["kWh"] / 1000
 
         # Rename columns
         df = df.rename(columns={"kWh": "Volume(MWh)", f"DateTime({timezone})": "DeliveryStart"})
@@ -1030,5 +1030,5 @@ class DetDatabaseDefinitions:
         table_name_account_position="[TT].[AccountPosition]",
         table_name_instruments="[TT].[Instrument]",
         table_name_eex_eod_price="[EEX].[EODPrice]",
-        table_name_forecast_customer_volume="[DISP].[ForecastGold]"
+        table_name_forecast_customer_volume="[DISP].[ForecastGold]",
     )
