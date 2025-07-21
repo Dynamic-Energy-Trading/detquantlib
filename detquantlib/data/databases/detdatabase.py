@@ -109,6 +109,7 @@ class DetDatabase:
         end_delivery_date: datetime = None,
         columns: list = None,
         process_data: bool = True,
+        timezone_aware_dates: bool = False,
     ) -> pd.DataFrame:
         """
         Loads entsoe day-ahead spot prices from the database.
@@ -128,6 +129,8 @@ class DetDatabase:
             columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
                 all columns.
             process_data: Indicates if data should be processed convert to standardized format
+            timezone_aware_dates: If true, returns all dates as timezone-aware. Otherwise,
+                returns them as timezone-naive.
 
         Returns:
             Dataframe containing day-ahead spot prices
@@ -137,8 +140,6 @@ class DetDatabase:
                 compatible
             ValueError: Raises an error if the combination of trading dates and delivery dates
                 is not valid.
-            ValueError: Raises an error if match with input commodity name is not unique
-            ValueError: Raises an error if input commodity is not supported
             ValueError: Raises an error if no price data is found for user inputs
         """
         # Input validation
@@ -181,21 +182,13 @@ class DetDatabase:
         # Note: The local timezone is important because ENTSOE provides all prices in the UTC
         # timezone. We first convert the dates from UTC to the local timezone, and then filter
         # for the requested delivery period.
-        commodity_info = self.load_commodities(
-            columns=["Timezone", "EntsoeMapCode"], conditions=f"WHERE Name='{commodity_name}'"
+        commodity_info = self.get_commodity_info(
+            filter_column="Name",
+            filter_value=commodity_name,
+            info_columns=["Timezone", "EntsoeMapCode"],
         )
-        if commodity_info.shape[0] > 1:
-            raise ValueError(f"More than one match found with commodity '{commodity_name}'.")
-        elif commodity_info.shape[0] == 0:
-            supported_commodities = self.load_commodities(columns=["Name"])
-            supported_commodities_str = ", ".join(f"'{x}'" for x in supported_commodities["Name"])
-            raise ValueError(
-                f"Commodity '{commodity_name}' is not supported. Supported commodities: "
-                f"{supported_commodities_str}."
-            )
-        else:
-            map_code = commodity_info.loc[0, "EntsoeMapCode"]
-            timezone = commodity_info.loc[0, "Timezone"]
+        map_code = commodity_info["EntsoeMapCode"]
+        timezone = commodity_info["Timezone"]
 
         # Convert start trading date to start delivery date
         if start_trading_date is not None:
@@ -239,11 +232,22 @@ class DetDatabase:
             by=["DateTime(UTC)"], axis=0, ascending=True, inplace=True, ignore_index=True
         )
 
+        # Convert date columns to timezone-aware dates
+        cols_date_utc = ["DateTime(UTC)", "UpdateTime(UTC)"]
+        for c in cols_date_utc:
+            if c in df.columns:
+                df[c] = df[c].dt.tz_localize("UTC")
+        if "InsertionTimestamp" in df.columns:
+            df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_localize(timezone)
+
         # Add column with delivery date expressed in local timezone
-        datetime_column_name = f"DateTime({timezone})"
-        df[datetime_column_name] = df["DateTime(UTC)"].dt.tz_localize("UTC")
-        df[datetime_column_name] = df[datetime_column_name].dt.tz_convert(timezone)
-        df[datetime_column_name] = df[datetime_column_name].dt.tz_localize(None)
+        df[f"DateTime({timezone})"] = df["DateTime(UTC)"].dt.tz_convert(timezone)
+
+        if not timezone_aware_dates:
+            cols_date_all = cols_date_utc + ["InsertionTimestamp", f"DateTime({timezone})"]
+            for c in cols_date_all:
+                if c in df.columns:
+                    df[c] = df[c].dt.tz_localize(None)
 
         # Process raw data and convert it to standardized format
         if process_data:
@@ -266,6 +270,8 @@ class DetDatabase:
         Returns:
             Processed dataframe containing day-ahead spot prices
         """
+        df_in.reset_index(drop=True, inplace=True)
+
         # Initialize output dataframe
         df_out = pd.DataFrame()
 
@@ -277,7 +283,7 @@ class DetDatabase:
         df_out["TradingDate"] = trading_date
 
         # Set delivery start date
-        df_out["DeliveryStart"] = df_in[f"DateTime({timezone})"].values
+        df_out["DeliveryStart"] = df_in[f"DateTime({timezone})"]
 
         # Set delivery end date
         delivery_end = [d + relativedelta(hours=1) for d in df_in[f"DateTime({timezone})"]]
@@ -300,6 +306,7 @@ class DetDatabase:
         end_delivery_date: datetime = None,
         columns: list = None,
         process_data: bool = True,
+        timezone_aware_dates: bool = False,
     ) -> pd.DataFrame:
         """
         Loads entsoe imbalance prices from the database.
@@ -319,6 +326,8 @@ class DetDatabase:
             columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
                 all columns.
             process_data: Indicates if data should be processed convert to standardized format
+            timezone_aware_dates: If true, returns all dates as timezone-aware. Otherwise,
+                returns them as timezone-naive.
 
         Returns:
             Dataframe containing imbalance prices
@@ -328,8 +337,6 @@ class DetDatabase:
                 compatible
             ValueError: Raises an error if the combination of trading dates and delivery dates
                 is not valid.
-            ValueError: Raises an error if match with input commodity name is not unique
-            ValueError: Raises an error if input commodity is not supported
             ValueError: Raises an error if no price data is found for user inputs
         """
         # Input validation
@@ -378,21 +385,13 @@ class DetDatabase:
         # Note: The local timezone is important because ENTSOE provides all prices in the UTC
         # timezone. We first convert the dates from UTC to the local timezone, and then filter
         # for the requested delivery period.
-        commodity_info = self.load_commodities(
-            columns=["Timezone", "EntsoeMapCode"], conditions=f"WHERE Name='{commodity_name}'"
+        commodity_info = self.get_commodity_info(
+            filter_column="Name",
+            filter_value=commodity_name,
+            info_columns=["Timezone", "EntsoeMapCode"],
         )
-        if commodity_info.shape[0] > 1:
-            raise ValueError(f"More than one match found with commodity '{commodity_name}'.")
-        elif commodity_info.shape[0] == 0:
-            supported_commodities = self.load_commodities(columns=["Name"])
-            supported_commodities_str = ", ".join(f"'{x}'" for x in supported_commodities["Name"])
-            raise ValueError(
-                f"Commodity '{commodity_name}' is not supported. Supported commodities: "
-                f"{supported_commodities_str}."
-            )
-        else:
-            map_code = commodity_info.loc[0, "EntsoeMapCode"]
-            timezone = commodity_info.loc[0, "Timezone"]
+        map_code = commodity_info["EntsoeMapCode"]
+        timezone = commodity_info["Timezone"]
 
         # Convert start trading date to start delivery date
         if start_trading_date is not None:
@@ -435,11 +434,22 @@ class DetDatabase:
             by=["DateTime(UTC)"], axis=0, ascending=True, inplace=True, ignore_index=True
         )
 
+        # Convert date columns to timezone-aware dates
+        cols_date_utc = ["DateTime(UTC)", "UpdateTime(UTC)"]
+        for c in cols_date_utc:
+            if c in df.columns:
+                df[c] = df[c].dt.tz_localize("UTC")
+        if "InsertionTimestamp" in df.columns:
+            df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_localize(timezone)
+
         # Add column with delivery date expressed in local timezone
-        datetime_column_name = f"DateTime({timezone})"
-        df[datetime_column_name] = df["DateTime(UTC)"].dt.tz_localize("UTC")
-        df[datetime_column_name] = df[datetime_column_name].dt.tz_convert(timezone)
-        df[datetime_column_name] = df[datetime_column_name].dt.tz_localize(None)
+        df[f"DateTime({timezone})"] = df["DateTime(UTC)"].dt.tz_convert(timezone)
+
+        if not timezone_aware_dates:
+            cols_date_all = cols_date_utc + ["InsertionTimestamp", f"DateTime({timezone})"]
+            for c in cols_date_all:
+                if c in df.columns:
+                    df[c] = df[c].dt.tz_localize(None)
 
         # Process raw data and convert it to standardized format
         if process_data:
@@ -462,6 +472,8 @@ class DetDatabase:
         Returns:
             Processed dataframe containing imbalance prices
         """
+        df_in.reset_index(drop=True, inplace=True)
+
         # Initialize output dataframe
         df_out = pd.DataFrame()
 
@@ -469,10 +481,10 @@ class DetDatabase:
         df_out["CommodityName"] = [commodity_name] * df_in.shape[0]
 
         # Set trading date
-        df_out["TradingDate"] = df_in[f"DateTime({timezone})"].dt.floor("D").values
+        df_out["TradingDate"] = df_in[f"DateTime({timezone})"].dt.floor("D")
 
         # Set delivery start date
-        df_out["DeliveryStart"] = df_in[f"DateTime({timezone})"].values
+        df_out["DeliveryStart"] = df_in[f"DateTime({timezone})"]
 
         # Set delivery end date
         delivery_end = [d + relativedelta(minutes=15) for d in df_in[f"DateTime({timezone})"]]
@@ -495,6 +507,7 @@ class DetDatabase:
         tenors: list,
         delivery_type: str,
         columns: list = None,
+        timezone_aware_dates: bool = False,
     ) -> pd.DataFrame:
         """
         Loads futures end-of-day settlement prices from the database, over a user-defined range
@@ -508,6 +521,8 @@ class DetDatabase:
             delivery_type: Delivery type ("Base", "Peak", "Offpeak")
             columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
                 all columns.
+            timezone_aware_dates: If true, returns all dates as timezone-aware. Otherwise,
+                returns them as timezone-naive.
 
         Returns:
             Dataframe containing futures end-of-day settlement prices
@@ -561,9 +576,23 @@ class DetDatabase:
         )
 
         # Convert dates from datetime.date to pd.Timestamp
-        df["TradingDate"] = pd.DatetimeIndex(df["TradingDate"])
-        df["DeliveryStart"] = pd.DatetimeIndex(df["DeliveryStart"])
-        df["DeliveryEnd"] = pd.DatetimeIndex(df["DeliveryEnd"])
+        cols_date = ["TradingDate", "DeliveryStart", "DeliveryEnd"]
+        for c in cols_date:
+            if c in df.columns:
+                df[c] = pd.DatetimeIndex(df[c])
+
+        if timezone_aware_dates:
+            # Get local timezone
+            commodity_info = self.get_commodity_info(
+                filter_column="Name", filter_value=commodity_name, info_columns=["Timezone"]
+            )
+            timezone = commodity_info["Timezone"]
+
+            # Convert timezone-naive to timezone-aware dates
+            cols_datetime = ["TradingDate", "DeliveryStart", "DeliveryEnd", "InsertionTimestamp"]
+            for c in cols_datetime:
+                if c in df.columns:
+                    df[c] = df[c].dt.tz_localize(timezone)
 
         return df
 
@@ -826,9 +855,10 @@ class DetDatabase:
         )
 
         # Convert dates from datetime.date to pd.Timestamp
-        df["TradingDate"] = pd.DatetimeIndex(df["TradingDate"])
-        df["Delivery Start"] = pd.DatetimeIndex(df["Delivery Start"])
-        df["Delivery End"] = pd.DatetimeIndex(df["Delivery End"])
+        cols_date = ["TradingDate", "Delivery Start", "Delivery End"]
+        for c in cols_date:
+            if c in df.columns:
+                df[c] = pd.DatetimeIndex(df[c])
 
         # Drop duplicates
         df = df.drop_duplicates()
