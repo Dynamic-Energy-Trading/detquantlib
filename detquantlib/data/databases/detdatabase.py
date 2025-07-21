@@ -183,7 +183,9 @@ class DetDatabase:
         # timezone. We first convert the dates from UTC to the local timezone, and then filter
         # for the requested delivery period.
         commodity_info = self.get_commodity_info(
-            filter_column="Name", filter_value=commodity_name, info_columns=["Timezone", "EntsoeMapCode"]
+            filter_column="Name",
+            filter_value=commodity_name,
+            info_columns=["Timezone", "EntsoeMapCode"],
         )
         map_code = commodity_info["EntsoeMapCode"]
         timezone = commodity_info["Timezone"]
@@ -384,7 +386,9 @@ class DetDatabase:
         # timezone. We first convert the dates from UTC to the local timezone, and then filter
         # for the requested delivery period.
         commodity_info = self.get_commodity_info(
-            filter_column="Name", filter_value=commodity_name, info_columns=["Timezone", "EntsoeMapCode"]
+            filter_column="Name",
+            filter_value=commodity_name,
+            info_columns=["Timezone", "EntsoeMapCode"],
         )
         map_code = commodity_info["EntsoeMapCode"]
         timezone = commodity_info["Timezone"]
