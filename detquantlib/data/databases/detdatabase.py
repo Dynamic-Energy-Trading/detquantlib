@@ -678,7 +678,7 @@ class DetDatabase:
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_account_position"]
         query = (
             f"SELECT {columns_str} FROM {table} "
-            f"WHERE CAST ([InsertionTimestamp] AS DATE) BETWEEN '{start_trading_date_str}' AND "
+            f"WHERE CAST(InsertionTimestamp AS DATE) BETWEEN '{start_trading_date_str}' AND "
             f"'{end_trading_date_str}'"
         )
 
@@ -802,8 +802,8 @@ class DetDatabase:
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_eex_eod_price"]
         query = (
             f"SELECT {columns_str} FROM {table} "
-            f"WHERE [Product] LIKE '{product_code}' "
-            f"AND CAST ([TradingDate] AS DATE) BETWEEN '{start_trading_date_str}' AND "
+            f"WHERE Product LIKE '{product_code}' "
+            f"AND CAST(TradingDate AS DATE) BETWEEN '{start_trading_date_str}' AND "
             f"'{end_trading_date_str}'"
         )
 
@@ -835,6 +835,157 @@ class DetDatabase:
 
         return df
 
+    def load_forecast_customer_volume(
+        self,
+        profile: str,
+        forecast_date: datetime,
+        start_delivery_date: datetime,
+        end_delivery_date: datetime,
+        commodity_name: str,
+        tz_aware_ind: bool = False,
+        columns: list = None,
+    ) -> pd.DataFrame:
+        """
+        Loads customer volume forecasts from the database, over a user-defined range of profiles
+        and delivery dates.
+
+        Args:
+            profile: Customer name or profile name (Portfolio/Portfolioweekend/PortfolioAll).
+            forecast_date: Date on which customer volume forecast is generated.
+            start_delivery_date: First delivery date included.
+            end_delivery_date: Last delivery date included.
+            commodity_name: Commodity name.
+            tz_aware_ind: Indicator allowing user to have timezone-aware dates.
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
+                all columns.
+
+        Returns:
+            Dataframe containing customer volume forecasts.
+
+        Raises:
+            ValueError: Raises an error if no volume forecast data is found for user inputs.
+        """
+        # Set database environment variable
+        os.environ["DET_DB_NAME"] = "det-trading"
+
+        # Set profile
+        if (profile == "PortfolioAll") & (forecast_date.weekday() > 4):
+            profile = "Portfolioweekend"
+        elif profile == "PortfolioAll":
+            profile = "Portfolio"
+
+        # Get commodity information (local timezone)
+        # Note: The local timezone is important because the DET database provides all volumes and
+        # prices in the UTC timezone. We first convert the dates local timezone to UTC then
+        # filter for the requested delivery period and convert back from UTC to the local timezone.
+        commodity_info = self.load_commodities(
+            columns=["Timezone"], conditions=f"WHERE Name='{commodity_name}'"
+        )
+        if commodity_info.shape[0] > 1:
+            raise ValueError(f"More than one match found with commodity '{commodity_name}'.")
+        elif commodity_info.shape[0] == 0:
+            supported_commodities = self.load_commodities(columns=["Name"])
+            supported_commodities_str = ", ".join(f"'{x}'" for x in supported_commodities["Name"])
+            raise ValueError(
+                f"Commodity '{commodity_name}' is not supported. Supported commodities: "
+                f"{supported_commodities_str}."
+            )
+        else:
+            timezone = commodity_info.loc[0, "Timezone"]
+
+        # Convert start delivery date from local timezone to UTC and string
+        start_delivery_date = start_delivery_date.replace(tzinfo=ZoneInfo(timezone))
+        start_delivery_date = start_delivery_date.astimezone(ZoneInfo("UTC"))
+        start_date_str = start_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Set delivery end time
+        end_delivery_date = end_delivery_date.replace(hour=23, minute=45)
+
+        # Convert end date to UTC and string
+        end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(timezone))
+        end_delivery_date = end_delivery_date.astimezone(ZoneInfo("UTC"))
+        end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Set database environment variable
+        os.environ["DET_DB_NAME"] = "det-lake-dev"
+
+        # Set default column values
+        if columns is None:
+            columns = ["*"]
+        else:
+            # Assert required columns
+            columns = list(
+                set(columns) | {"Datetime", "kWh", "Profile", "ForecastDate", "InsertionTimestamp"}
+            )
+
+        # Convert columns from list to string
+        if len(columns) == 1:
+            columns_str = str(columns[0])
+        else:
+            columns_str = f"[{'], ['.join(columns)}]"
+
+        # Convert dates from datetime to string
+        forecast_date = forecast_date.strftime("%Y-%m-%d")
+
+        # Create query
+        table = DetDatabaseDefinitions.DEFINITIONS["table_name_forecast_customer_volume"]
+        query = (
+            f"SELECT {columns_str} FROM {table} "
+            f"WHERE Profile = '{profile}'"
+            f"AND ForecastDate = '{forecast_date}'"
+            f"AND CAST(Datetime AS DATE) BETWEEN '{start_date_str}' AND "
+            f"'{end_date_str}'"
+        )
+
+        # Query db
+        self.open_connection()
+        df = self.query_db(query)
+        self.close_connection()
+
+        # Assert data
+        if df.empty:
+            raise ValueError("No volume forecast data found for user-defined inputs.")
+
+        # Sort data
+        df.sort_values(
+            by=["Datetime", "Profile"],
+            axis=0,
+            ascending=True,
+            inplace=True,
+            ignore_index=True,
+        )
+
+        # Add column with delivery date expressed in local timezone
+        datetime_column_name = f"DateTime({timezone})"
+        df[datetime_column_name] = df["Datetime"].dt.tz_localize("UTC")
+        df[datetime_column_name] = df[datetime_column_name].dt.tz_convert(timezone)
+
+        # Add column with insertion timestamp datetime expressed in local timezone
+        df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_localize("UTC")
+        df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_convert(timezone)
+
+        # Set timezone-unaware dates
+        if tz_aware_ind == False:
+            df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_localize(None)
+            df[datetime_column_name] = df[datetime_column_name].dt.tz_localize(None)
+
+        # Convert dates from string to pd.Timestamp
+        df["ForecastDate"] = df["ForecastDate"].apply(pd.Timestamp)
+
+        # Drop duplicates
+        df = df.drop_duplicates()
+
+        # Rescale column values
+        df["kWh"] = df["kWh"]/1000
+
+        # Rename columns
+        df = df.rename(columns={"kWh": "Volume(MWh)", f"Datetime({timezone})": "DeliveryStart"})
+
+        # Drop columns
+        df = df.drop("Datetime", axis=1)
+
+        return df
+
 
 class DetDatabaseDefinitions:
     """A class containing some hard-coded definitions related to the DET database."""
@@ -847,4 +998,5 @@ class DetDatabaseDefinitions:
         table_name_account_position="[TT].[AccountPosition]",
         table_name_instruments="[TT].[Instrument]",
         table_name_eex_eod_price="[EEX].[EODPrice]",
+        table_name_forecast_customer_volume="[DISP].[ForecastGold]"
     )
