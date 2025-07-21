@@ -268,6 +268,8 @@ class DetDatabase:
         Returns:
             Processed dataframe containing day-ahead spot prices
         """
+        df_in.reset_index(drop=True, inplace=True)
+
         # Initialize output dataframe
         df_out = pd.DataFrame()
 
@@ -279,7 +281,7 @@ class DetDatabase:
         df_out["TradingDate"] = trading_date
 
         # Set delivery start date
-        df_out["DeliveryStart"] = df_in[f"DateTime({timezone})"].values
+        df_out["DeliveryStart"] = df_in[f"DateTime({timezone})"]
 
         # Set delivery end date
         delivery_end = [d + relativedelta(hours=1) for d in df_in[f"DateTime({timezone})"]]
@@ -466,6 +468,8 @@ class DetDatabase:
         Returns:
             Processed dataframe containing imbalance prices
         """
+        df_in.reset_index(drop=True, inplace=True)
+
         # Initialize output dataframe
         df_out = pd.DataFrame()
 
@@ -473,10 +477,10 @@ class DetDatabase:
         df_out["CommodityName"] = [commodity_name] * df_in.shape[0]
 
         # Set trading date
-        df_out["TradingDate"] = df_in[f"DateTime({timezone})"].dt.floor("D").values
+        df_out["TradingDate"] = df_in[f"DateTime({timezone})"].dt.floor("D")
 
         # Set delivery start date
-        df_out["DeliveryStart"] = df_in[f"DateTime({timezone})"].values
+        df_out["DeliveryStart"] = df_in[f"DateTime({timezone})"]
 
         # Set delivery end date
         delivery_end = [d + relativedelta(minutes=15) for d in df_in[f"DateTime({timezone})"]]
