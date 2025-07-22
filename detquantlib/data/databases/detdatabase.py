@@ -233,18 +233,16 @@ class DetDatabase:
         )
 
         # Convert date columns to timezone-aware dates
-        cols_date_utc = ["DateTime(UTC)", "UpdateTime(UTC)"]
+        cols_date_utc = ["DateTime(UTC)", "UpdateTime(UTC)", "InsertionTimestamp"]
         for c in cols_date_utc:
             if c in df.columns:
                 df[c] = df[c].dt.tz_localize("UTC")
-        if "InsertionTimestamp" in df.columns:
-            df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_localize(timezone)
 
         # Add column with delivery date expressed in local timezone
         df[f"DateTime({timezone})"] = df["DateTime(UTC)"].dt.tz_convert(timezone)
 
         if not timezone_aware_dates:
-            cols_date_all = cols_date_utc + ["InsertionTimestamp", f"DateTime({timezone})"]
+            cols_date_all = cols_date_utc + [f"DateTime({timezone})"]
             for c in cols_date_all:
                 if c in df.columns:
                     df[c] = df[c].dt.tz_localize(None)
@@ -435,18 +433,16 @@ class DetDatabase:
         )
 
         # Convert date columns to timezone-aware dates
-        cols_date_utc = ["DateTime(UTC)", "UpdateTime(UTC)"]
+        cols_date_utc = ["DateTime(UTC)", "UpdateTime(UTC)", "InsertionTimestamp"]
         for c in cols_date_utc:
             if c in df.columns:
                 df[c] = df[c].dt.tz_localize("UTC")
-        if "InsertionTimestamp" in df.columns:
-            df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_localize(timezone)
 
         # Add column with delivery date expressed in local timezone
         df[f"DateTime({timezone})"] = df["DateTime(UTC)"].dt.tz_convert(timezone)
 
         if not timezone_aware_dates:
-            cols_date_all = cols_date_utc + ["InsertionTimestamp", f"DateTime({timezone})"]
+            cols_date_all = cols_date_utc + [f"DateTime({timezone})"]
             for c in cols_date_all:
                 if c in df.columns:
                     df[c] = df[c].dt.tz_localize(None)
@@ -589,8 +585,9 @@ class DetDatabase:
             timezone = commodity_info["Timezone"]
 
             # Convert timezone-naive to timezone-aware dates
-            cols_datetime = ["TradingDate", "DeliveryStart", "DeliveryEnd", "InsertionTimestamp"]
-            for c in cols_datetime:
+            df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_localize("UTC")
+            cols_local_tz = ["TradingDate", "DeliveryStart", "DeliveryEnd"]
+            for c in cols_local_tz:
                 if c in df.columns:
                     df[c] = df[c].dt.tz_localize(timezone)
 
