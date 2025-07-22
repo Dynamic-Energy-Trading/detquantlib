@@ -717,17 +717,16 @@ class DetDatabase:
         if df.empty:
             raise ValueError("No account position data found for user-defined inputs.")
 
-        # Sort data
-        df.sort_values(
-            by=["InsertionTimestamp"],
-            axis=0,
-            ascending=True,
-            inplace=True,
-            ignore_index=True,
-        )
-
-        # Convert dates from datetime.date to pd.Timestamp
-        df["InsertionTimestamp"] = pd.DatetimeIndex(df["InsertionTimestamp"])
+        # Sort data and convert dates from datetime.date to pd.Timestamp
+        if "InsertionTimestamp" in df.columns:
+            df.sort_values(
+                by=["InsertionTimestamp"],
+                axis=0,
+                ascending=True,
+                inplace=True,
+                ignore_index=True,
+            )
+            df["InsertionTimestamp"] = pd.DatetimeIndex(df["InsertionTimestamp"])
 
         return df
 
@@ -957,18 +956,19 @@ class DetDatabase:
             )
 
         # Localize, convert and set timezone-(un)aware datetimes
-        datetime_cols = ["ForecastDate", "Datetime", "InsertionTimestamp"]
-        datetime_cols = [c for c in datetime_cols if c in df.columns]
-        for column in datetime_cols:
-            if column == "ForecastDate":
-                df[column] = df[column].apply(lambda x: datetime.combine(x, datetime.min.time()))
-                df[column] = df[column].dt.tz_localize(local_timezone)
-            else:
-                df[column] = df[column].dt.tz_localize("UTC")
-                df[column] = df[column].dt.tz_convert(local_timezone)
-            if timezone_aware_dates == False:
-                df[column] = df[column].dt.tz_localize(None)
-            df[column] = pd.DatetimeIndex(df[column])
+        cols_date = ["ForecastDate", "Datetime", "InsertionTimestamp"]
+        for c in cols_date:
+            if c in df.columns:
+                # "ForecastDate" is not timezone aware yet and in Europe/Amsterdam timezone
+                if c == "ForecastDate":
+                    df[c] = df[c].apply(lambda x: datetime.combine(x, datetime.min.time()))
+                    df[c] = df[c].dt.tz_localize("Europe/Amsterdam")
+                else:
+                    df[c] = df[c].dt.tz_localize("UTC")
+                    df[c] = df[c].dt.tz_convert(local_timezone)
+                if timezone_aware_dates == False:
+                    df[c] = df[c].dt.tz_localize(None)
+                df[c] = pd.DatetimeIndex(df[c])
 
         # Rescale column values
         df["kWh"] = df["kWh"] / 1000
