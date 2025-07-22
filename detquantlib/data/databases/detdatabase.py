@@ -876,8 +876,7 @@ class DetDatabase:
         columns: list = None,
     ) -> pd.DataFrame:
         """
-        Loads customer volume forecasts from the database, over a user-defined range of profiles
-        and delivery dates.
+        Loads customer volume forecasts from the database.
 
         Args:
             profile: Customer name or profile name (Portfolio/Portfolioweekend/PortfolioAll).
@@ -885,7 +884,8 @@ class DetDatabase:
             start_delivery_date: First delivery date included.
             end_delivery_date: Last delivery date included.
             commodity_name: Commodity name.
-            tz_aware_ind: Indicator allowing user to have timezone-aware dates.
+            timezone_aware_dates: If true, returns all dates as timezone-aware. Otherwise,
+                returns them as timezone-naive.
             columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
                 all columns.
 
@@ -905,8 +905,8 @@ class DetDatabase:
             profile = "Portfolio"
 
         # Get commodity information (local timezone)
-        # Note: The local timezone is important because the DET database provides all volumes and
-        # prices in the UTC timezone. We first convert the dates local timezone to UTC then
+        # Note: The local timezone is important because the DET database provides all volumes
+        # in the UTC timezone. We first convert the dates local timezone to UTC then
         # filter for the requested delivery period and convert back from UTC to the local timezone.
         commodity_info = self.load_commodities(
             columns=["Timezone"], conditions=f"WHERE Name='{commodity_name}'"
@@ -929,7 +929,7 @@ class DetDatabase:
         start_date_str = start_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
 
         # Set delivery end time
-        end_delivery_date = end_delivery_date.replace(hour=23, minute=45)
+        end_delivery_date = end_delivery_date.replace(hour=23, minute=59, second=59)
 
         # Convert end date to UTC and string
         end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(timezone))
@@ -977,13 +977,16 @@ class DetDatabase:
             raise ValueError("No volume forecast data found for user-defined inputs.")
 
         # Sort data
-        df.sort_values(
-            by=["Datetime", "Profile"],
-            axis=0,
-            ascending=True,
-            inplace=True,
-            ignore_index=True,
-        )
+        sort_cols = ["Profile", "ForecastDate", "Datetime"]
+        sort_cols = [c for c in sort_cols if c in df.columns]
+        if len(sort_cols) > 0:
+            df.sort_values(
+                by=sort_cols,
+                axis=0,
+                ascending=True,
+                inplace=True,
+                ignore_index=True,
+            )
 
         # Add column with delivery date expressed in local timezone
         datetime_column_name = f"DateTime({timezone})"
