@@ -871,23 +871,24 @@ class DetDatabase:
         forecast_date: datetime,
         start_delivery_date: datetime,
         end_delivery_date: datetime,
-        commodity_name: str,
-        tz_aware_ind: bool = False,
+        local_timezone: str,
+        timezone_aware_dates: bool = False,
         columns: list = None,
     ) -> pd.DataFrame:
         """
-        Loads customer volume forecasts from the database.
+        Loads customer volume forecasts from DET database.
 
         Args:
-            profile: Customer name or profile name (Portfolio/Portfolioweekend/PortfolioAll).
+            profile: Customer- or profile name ("PortfolioAll" is converted to "Portfolioweekend"
+                or "Portfolio", whichever is applicable based on the weekday of forecast_date).
             forecast_date: Date on which customer volume forecast is generated.
             start_delivery_date: First delivery date included.
             end_delivery_date: Last delivery date included.
-            commodity_name: Commodity name.
-            timezone_aware_dates: If true, returns all dates as timezone-aware. Otherwise,
-                returns them as timezone-naive.
-            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
-                all columns.
+            local_timezone: Local timezone (needed to account for DST switches).
+            timezone_aware_dates: If true, returns all dates as timezone-aware. Otherwise, returns
+                them as timezone-naive.
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get all
+                columns.
 
         Returns:
             Dataframe containing customer volume forecasts.
@@ -895,58 +896,28 @@ class DetDatabase:
         Raises:
             ValueError: Raises an error if no volume forecast data is found for user inputs.
         """
-        # Set database environment variable
-        os.environ["DET_DB_NAME"] = "det-trading"
-
-        # Set profile
+        # Convert profile if set to "PortfolioAll"
         if (profile == "PortfolioAll") & (forecast_date.weekday() > 4):
             profile = "Portfolioweekend"
         elif profile == "PortfolioAll":
             profile = "Portfolio"
 
-        # Get commodity information (local timezone)
-        # Note: The local timezone is important because the DET database provides all volumes
-        # in the UTC timezone. We first convert the dates local timezone to UTC then
-        # filter for the requested delivery period and convert back from UTC to the local timezone.
-        commodity_info = self.load_commodities(
-            columns=["Timezone"], conditions=f"WHERE Name='{commodity_name}'"
-        )
-        if commodity_info.shape[0] > 1:
-            raise ValueError(f"More than one match found with commodity '{commodity_name}'.")
-        elif commodity_info.shape[0] == 0:
-            supported_commodities = self.load_commodities(columns=["Name"])
-            supported_commodities_str = ", ".join(f"'{x}'" for x in supported_commodities["Name"])
-            raise ValueError(
-                f"Commodity '{commodity_name}' is not supported. Supported commodities: "
-                f"{supported_commodities_str}."
-            )
-        else:
-            timezone = commodity_info.loc[0, "Timezone"]
-
         # Convert start delivery date from local timezone to UTC and string
-        start_delivery_date = start_delivery_date.replace(tzinfo=ZoneInfo(timezone))
+        start_delivery_date = start_delivery_date.replace(tzinfo=ZoneInfo(local_timezone))
         start_delivery_date = start_delivery_date.astimezone(ZoneInfo("UTC"))
         start_date_str = start_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
 
         # Set delivery end time
         end_delivery_date = end_delivery_date.replace(hour=23, minute=59, second=59)
 
-        # Convert end date to UTC and string
-        end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(timezone))
+        # Convert end delivery date form local timezone to UTC and string
+        end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(local_timezone))
         end_delivery_date = end_delivery_date.astimezone(ZoneInfo("UTC"))
         end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
-
-        # Set database environment variable
-        os.environ["DET_DB_NAME"] = "det-lake-dev"
 
         # Set default column values
         if columns is None:
             columns = ["*"]
-        else:
-            # Assert required columns
-            columns = list(
-                set(columns) | {"Datetime", "kWh", "Profile", "ForecastDate", "InsertionTimestamp"}
-            )
 
         # Convert columns from list to string
         if len(columns) == 1:
@@ -963,7 +934,7 @@ class DetDatabase:
             f"SELECT {columns_str} FROM {table} "
             f"WHERE Profile = '{profile}'"
             f"AND ForecastDate = '{forecast_date}'"
-            f"AND CAST(Datetime AS DATE) BETWEEN '{start_date_str}' AND "
+            f"AND CAST(Datetime AS DATETIME) BETWEEN '{start_date_str}' AND "
             f"'{end_date_str}'"
         )
 
@@ -988,36 +959,25 @@ class DetDatabase:
                 ignore_index=True,
             )
 
-        # Add column with delivery date expressed in local timezone
-        datetime_column_name = f"DateTime({timezone})"
-        df[datetime_column_name] = df["Datetime"].dt.tz_localize("UTC")
-        df[datetime_column_name] = df[datetime_column_name].dt.tz_convert(timezone)
-
-        # Add column with insertion timestamp datetime expressed in local timezone
-        df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_localize("UTC")
-        df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_convert(timezone)
-
-        # Set timezone-unaware dates
-        if tz_aware_ind == False:
-            df["InsertionTimestamp"] = df["InsertionTimestamp"].dt.tz_localize(None)
-            df[datetime_column_name] = df[datetime_column_name].dt.tz_localize(None)
-
-        # Convert dates from datetime.date to pd.Timestamp
-        df["InsertionTimestamp"] = pd.DatetimeIndex(df["InsertionTimestamp"])
-        df["ForecastDate"] = pd.DatetimeIndex(df["ForecastDate"])
-        df[f"DateTime({timezone})"] = pd.DatetimeIndex(df[f"DateTime({timezone})"])
-
-        # Drop duplicates
-        df = df.drop_duplicates()
+        # Localize, convert and make timezone-(un)aware datetimes
+        datetime_cols = ["ForecastDate", "Datetime", "InsertionTimestamp"]
+        datetime_cols = [c for c in datetime_cols if c in df.columns]
+        for column in datetime_cols:
+            if column == "ForecastDate":
+                df[column] = df[column].apply(lambda x: datetime.combine(x, datetime.min.time()))
+                df[column] = df[column].dt.tz_localize(local_timezone)
+            else:
+                df[column] = df[column].dt.tz_localize("UTC")
+                df[column] = df[column].dt.tz_convert(local_timezone)
+            if timezone_aware_dates == False:
+                df[column] = df[column].dt.tz_localize(None)
+            df[column] = pd.DatetimeIndex(df[column])
 
         # Rescale column values
         df["kWh"] = df["kWh"] / 1000
 
         # Rename columns
-        df = df.rename(columns={"kWh": "Volume(MWh)", f"DateTime({timezone})": "DeliveryStart"})
-
-        # Drop columns
-        df = df.drop("Datetime", axis=1)
+        df = df.rename(columns={"kWh": "Volume(MWh)", "Datetime": "DeliveryStart"})
 
         return df
 
