@@ -959,10 +959,10 @@ class DetDatabase:
         cols_date = ["ForecastDate", "Datetime", "InsertionTimestamp"]
         for c in cols_date:
             if c in df.columns:
-                # "ForecastDate" is not timezone aware yet and in Europe/Amsterdam timezone
+                # "ForecastDate" is not timezone aware yet
                 if c == "ForecastDate":
                     df[c] = df[c].apply(lambda x: datetime.combine(x, datetime.min.time()))
-                    df[c] = df[c].dt.tz_localize("Europe/Amsterdam")
+                    df[c] = df[c].dt.tz_localize(local_timezone)
                 else:
                     df[c] = df[c].dt.tz_localize("UTC")
                     df[c] = df[c].dt.tz_convert(local_timezone)
