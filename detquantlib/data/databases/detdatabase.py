@@ -879,8 +879,8 @@ class DetDatabase:
         Loads customer volume forecasts from DET database.
 
         Args:
-            profile: Customer- or profile name ("PortfolioAll" is converted to "Portfolioweekend"
-                or "Portfolio", whichever is applicable based on the weekday of forecast_date).
+            profile: Customer-/profile name ("PortfolioAll" is converted to "Portfolioweekend"  or
+                "Portfolio", whichever is applicable based on the weekday of forecast_date).
             forecast_date: Date on which customer volume forecast is generated.
             start_delivery_date: First delivery date included.
             end_delivery_date: Last delivery date included.
@@ -959,7 +959,7 @@ class DetDatabase:
                 ignore_index=True,
             )
 
-        # Localize, convert and make timezone-(un)aware datetimes
+        # Localize, convert and set timezone-(un)aware datetimes
         datetime_cols = ["ForecastDate", "Datetime", "InsertionTimestamp"]
         datetime_cols = [c for c in datetime_cols if c in df.columns]
         for column in datetime_cols:
