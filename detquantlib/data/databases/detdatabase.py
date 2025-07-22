@@ -875,7 +875,7 @@ class DetDatabase:
         Loads customer volume forecasts from DET database.
 
         Args:
-            profile: Customer-/profile name ("PortfolioAll" is converted to "Portfolioweekend"  or
+            profile: Customer-/profile name ("PortfolioAll" is converted to "Portfolioweekend" or
                 "Portfolio", whichever is applicable based on the weekday of forecast_date).
             forecast_date: Date on which customer volume forecast is generated.
             start_delivery_date: First delivery date included.
