@@ -875,8 +875,17 @@ class DetDatabase:
         Loads customer volume forecasts from DET database.
 
         Args:
-            profile: Customer-/profile name ("PortfolioAll" is converted to "Portfolioweekend" or
-                "Portfolio", whichever is applicable based on the weekday of forecast_date).
+            profile: Customer/profile name.
+                Note on the 'Portfolio' and 'Portfolioweekend' profiles:
+                - Profile names 'Portfolio' and 'Portfolioweekend' refer to the same set of
+                    connection points.
+                - In the database, the profile name is set to 'Portfolio' when the forecast date
+                    is between Monday and Friday.
+                - In the database, the profile name is set to 'Portfolioweekend' when the forecast
+                    date is Saturday or Sunday.
+                - When calling this method, the input argument 'profile' can be set to
+                    'PortfolioAll' to automatically let the method switch between 'Portfolio' and
+                    'Portfolioweekend', based on the used-input forecast date.
             forecast_date: Date on which customer volume forecast is generated.
             start_delivery_date: First delivery date included.
             end_delivery_date: Last delivery date included.
@@ -893,10 +902,11 @@ class DetDatabase:
             ValueError: Raises an error if no volume forecast data is found for user inputs.
         """
         # Convert profile if set to "PortfolioAll"
-        if (profile == "PortfolioAll") & (forecast_date.weekday() > 4):
-            profile = "Portfolioweekend"
-        elif profile == "PortfolioAll":
-            profile = "Portfolio"
+        if profile == "PortfolioAll":
+            if forecast_date.weekday() > 4:
+                profile = "Portfolioweekend"
+            else:
+                profile = "Portfolio"
 
         # Convert start delivery date from local timezone to UTC and string
         start_delivery_date = start_delivery_date.replace(tzinfo=ZoneInfo(local_timezone))
@@ -959,16 +969,18 @@ class DetDatabase:
         cols_date = ["ForecastDate", "Datetime", "InsertionTimestamp"]
         for c in cols_date:
             if c in df.columns:
-                # "ForecastDate" is not timezone aware yet
+                # Convert from datetime to pandas timestamp
+                df[c] = pd.DatetimeIndex(df[c])
+
+                # Convert to timezone-aware dates
                 if c == "ForecastDate":
-                    df[c] = df[c].apply(lambda x: datetime.combine(x, datetime.min.time()))
                     df[c] = df[c].dt.tz_localize(local_timezone)
                 else:
                     df[c] = df[c].dt.tz_localize("UTC")
                     df[c] = df[c].dt.tz_convert(local_timezone)
-                if timezone_aware_dates == False:
+
+                if not timezone_aware_dates:
                     df[c] = df[c].dt.tz_localize(None)
-                df[c] = pd.DatetimeIndex(df[c])
 
         # Rescale column values
         df["kWh"] = df["kWh"] / 1000
