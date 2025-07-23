@@ -704,7 +704,7 @@ class DetDatabase:
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_account_position"]
         query = (
             f"SELECT {columns_str} FROM {table} "
-            f"WHERE CAST ([InsertionTimestamp] AS DATE) BETWEEN '{start_trading_date_str}' AND "
+            f"WHERE CAST(InsertionTimestamp AS DATE) BETWEEN '{start_trading_date_str}' AND "
             f"'{end_trading_date_str}'"
         )
 
@@ -717,17 +717,16 @@ class DetDatabase:
         if df.empty:
             raise ValueError("No account position data found for user-defined inputs.")
 
-        # Sort data
-        df.sort_values(
-            by=["InsertionTimestamp"],
-            axis=0,
-            ascending=True,
-            inplace=True,
-            ignore_index=True,
-        )
-
-        # Convert dates from datetime.date to pd.Timestamp
-        df["InsertionTimestamp"] = pd.DatetimeIndex(df["InsertionTimestamp"])
+        # Sort data and convert dates from datetime.date to pd.Timestamp
+        if "InsertionTimestamp" in df.columns:
+            df.sort_values(
+                by=["InsertionTimestamp"],
+                axis=0,
+                ascending=True,
+                inplace=True,
+                ignore_index=True,
+            )
+            df["InsertionTimestamp"] = pd.DatetimeIndex(df["InsertionTimestamp"])
 
         return df
 
@@ -828,8 +827,8 @@ class DetDatabase:
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_eex_eod_price"]
         query = (
             f"SELECT {columns_str} FROM {table} "
-            f"WHERE [Product] LIKE '{product_code}' "
-            f"AND CAST ([TradingDate] AS DATE) BETWEEN '{start_trading_date_str}' AND "
+            f"WHERE Product LIKE '{product_code}' "
+            f"AND CAST(TradingDate AS DATE) BETWEEN '{start_trading_date_str}' AND "
             f"'{end_trading_date_str}'"
         )
 
@@ -862,6 +861,135 @@ class DetDatabase:
 
         return df
 
+    def load_forecast_customer_volume(
+        self,
+        profile: str,
+        forecast_date: datetime,
+        start_delivery_date: datetime,
+        end_delivery_date: datetime,
+        local_timezone: str,
+        timezone_aware_dates: bool = False,
+        columns: list = None,
+    ) -> pd.DataFrame:
+        """
+        Loads customer volume forecasts from DET database.
+
+        Args:
+            profile: Customer/profile name.
+                Note on the 'Portfolio' and 'Portfolioweekend' profiles:
+                - Profile names 'Portfolio' and 'Portfolioweekend' refer to the same set of
+                    connection points.
+                - In the database, the profile name is set to 'Portfolio' when the forecast date
+                    is between Monday and Friday.
+                - In the database, the profile name is set to 'Portfolioweekend' when the forecast
+                    date is Saturday or Sunday.
+                - When calling this method, the input argument 'profile' can be set to
+                    'PortfolioAll' to automatically let the method switch between 'Portfolio' and
+                    'Portfolioweekend', based on the used-input forecast date.
+            forecast_date: Date on which customer volume forecast is generated.
+            start_delivery_date: First delivery date included.
+            end_delivery_date: Last delivery date included.
+            local_timezone: Local timezone (needed to account for DST switches).
+            timezone_aware_dates: If true, returns all dates as timezone-aware. Otherwise, returns
+                them as timezone-naive.
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get all
+                columns.
+
+        Returns:
+            Dataframe containing customer volume forecasts.
+
+        Raises:
+            ValueError: Raises an error if no volume forecast data is found for user inputs.
+        """
+        # Convert profile if set to "PortfolioAll"
+        if profile == "PortfolioAll":
+            if forecast_date.weekday() > 4:
+                profile = "Portfolioweekend"
+            else:
+                profile = "Portfolio"
+
+        # Convert start delivery date from local timezone to UTC and string
+        start_delivery_date = start_delivery_date.replace(tzinfo=ZoneInfo(local_timezone))
+        start_delivery_date = start_delivery_date.astimezone(ZoneInfo("UTC"))
+        start_date_str = start_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Set delivery end time
+        end_delivery_date = end_delivery_date.replace(hour=23, minute=59, second=59)
+
+        # Convert end delivery date form local timezone to UTC and string
+        end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(local_timezone))
+        end_delivery_date = end_delivery_date.astimezone(ZoneInfo("UTC"))
+        end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Set default column values
+        if columns is None:
+            columns = ["*"]
+
+        # Convert columns from list to string
+        if len(columns) == 1:
+            columns_str = str(columns[0])
+        else:
+            columns_str = f"[{'], ['.join(columns)}]"
+
+        # Convert dates from datetime to string
+        forecast_date = forecast_date.strftime("%Y-%m-%d")
+
+        # Create query
+        table = DetDatabaseDefinitions.DEFINITIONS["table_name_forecast_customer_volume"]
+        query = (
+            f"SELECT {columns_str} FROM {table} "
+            f"WHERE Profile = '{profile}'"
+            f"AND ForecastDate = '{forecast_date}'"
+            f"AND CAST(Datetime AS DATETIME) BETWEEN '{start_date_str}' AND "
+            f"'{end_date_str}'"
+        )
+
+        # Query db
+        self.open_connection()
+        df = self.query_db(query)
+        self.close_connection()
+
+        # Assert data
+        if df.empty:
+            raise ValueError("No volume forecast data found for user-defined inputs.")
+
+        # Sort data
+        sort_cols = ["Profile", "ForecastDate", "Datetime"]
+        sort_cols = [c for c in sort_cols if c in df.columns]
+        if len(sort_cols) > 0:
+            df.sort_values(
+                by=sort_cols,
+                axis=0,
+                ascending=True,
+                inplace=True,
+                ignore_index=True,
+            )
+
+        # Localize, convert and set timezone-(un)aware datetimes
+        cols_date = ["ForecastDate", "Datetime", "InsertionTimestamp"]
+        for c in cols_date:
+            if c in df.columns:
+                # Convert from datetime to pandas timestamp
+                df[c] = pd.DatetimeIndex(df[c])
+
+                # Convert to timezone-aware dates
+                if c == "ForecastDate":
+                    df[c] = df[c].dt.tz_localize(local_timezone)
+                else:
+                    df[c] = df[c].dt.tz_localize("UTC")
+                    df[c] = df[c].dt.tz_convert(local_timezone)
+
+                if not timezone_aware_dates:
+                    df[c] = df[c].dt.tz_localize(None)
+
+        # Rescale column values
+        df["kWh"] = df["kWh"] / 1000
+
+        # Rename columns
+        df = df.rename(columns={"kWh": "Volume(MWh)", "Datetime": "DeliveryStart"})
+
+        return df
+
 
 class DetDatabaseDefinitions:
     """A class containing some hard-coded definitions related to the DET database."""
@@ -874,4 +1002,5 @@ class DetDatabaseDefinitions:
         table_name_account_position="[TT].[AccountPosition]",
         table_name_instruments="[TT].[Instrument]",
         table_name_eex_eod_price="[EEX].[EODPrice]",
+        table_name_forecast_customer_volume="[DISP].[ForecastGold]",
     )
