@@ -1054,8 +1054,8 @@ class DetDatabase:
         ]
         query = (
             f"SELECT {columns_str} FROM {table} "
-            f"WHERE ClientId = '{client_id}'"
-            f"AND CAST(InsertionTimestamp AS DATE) = '{forecast_date}'"
+            f"WHERE ClientId = '{client_id}' "
+            f"AND CAST(InsertionTimestamp AS DATE) = '{forecast_date}' "
             f"AND CAST(DeliveryStart AS DATETIME) BETWEEN '{start_date_str}' AND "
             f"'{end_date_str}'"
             f"AND CAST(DeliveryEnd AS DATETIME) BETWEEN '{start_date_str}' AND "
@@ -1104,7 +1104,10 @@ class DetDatabase:
 
         # Rescale column values
         df["Volume"] = df["Volume"] / 1000
-        df["VolumeUnit"] = "MWh"
+
+        # Reset volume units
+        if "VolumeUnit" in df.columns:
+            df["VolumeUnit"] = "MWh"
 
         return df
 
