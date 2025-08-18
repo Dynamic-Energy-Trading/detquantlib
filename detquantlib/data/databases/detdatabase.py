@@ -990,7 +990,6 @@ class DetDatabase:
 
         return df
 
-
     def load_forecast_customer_volume_bids_custom(
         self,
         client_id: str,
@@ -1070,8 +1069,9 @@ class DetDatabase:
 
         # Assert data
         if df.empty:
-            raise ValueError("No volume forecast or custom bid limit data found for "
-                             "user-defined inputs!")
+            raise ValueError(
+                "No volume forecast or custom bid limit data found for " "user-defined inputs!"
+            )
 
         # Sort data
         sort_cols = ["ClientId", "InsertionTimestamp", "DeliveryStart"]
