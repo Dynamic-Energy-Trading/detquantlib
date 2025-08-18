@@ -1,7 +1,7 @@
 # Python built-in packages
 import os
 import warnings
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 # Third-party packages
@@ -991,6 +991,124 @@ class DetDatabase:
         return df
 
 
+    def load_forecast_customer_volume_bids_custom(
+        self,
+        client_id: str,
+        forecast_date: datetime,
+        start_delivery_date: datetime,
+        end_delivery_date: datetime,
+        local_timezone: str,
+        timezone_aware_dates: bool = False,
+        columns: list = None,
+    ) -> pd.DataFrame:
+        """
+        Loads customer volume forecasts and custom bid limits from DET database.
+
+        Args:
+            client_id: Client ID
+            forecast_date: Date on which customer volume forecast is generated (for which
+                it is assumed to be inserted on the same data in DET database)
+            start_delivery_date: First delivery date included
+            end_delivery_date: Last delivery date included
+            local_timezone: Local timezone (needed to account for DST switches)
+            timezone_aware_dates: If true, returns all dates as timezone-aware. Otherwise, returns
+                them as timezone-naive
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get all
+                columns
+
+        Returns:
+            Dataframe containing customer volume forecast and custom bid limit data
+
+        Raises:
+            ValueError: Raises an error if no volume forecast and custom bid limits data is
+                found for user inputs
+        """
+        # Convert start delivery date from local timezone to UTC and string
+        start_delivery_date = start_delivery_date.replace(tzinfo=ZoneInfo(local_timezone))
+        start_delivery_date = start_delivery_date.astimezone(ZoneInfo("UTC"))
+        start_date_str = start_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Set delivery end time
+        end_delivery_date = end_delivery_date + timedelta(days=1)
+
+        # Convert end delivery date form local timezone to UTC and string
+        end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(local_timezone))
+        end_delivery_date = end_delivery_date.astimezone(ZoneInfo("UTC"))
+        end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Set default column values
+        if columns is None:
+            columns = ["*"]
+
+        # Convert columns from list to string
+        if len(columns) == 1:
+            columns_str = str(columns[0])
+        else:
+            columns_str = f"[{'], ['.join(columns)}]"
+
+        # Convert dates from datetime to string
+        forecast_date = forecast_date.strftime("%Y-%m-%d")
+
+        # Create query
+        table = DetDatabaseDefinitions.DEFINITIONS[
+            "table_name_forecast_customer_volume_custom_bids"
+        ]
+        query = (
+            f"SELECT {columns_str} FROM {table} "
+            f"WHERE ClientId = '{client_id}'"
+            f"AND CAST(InsertionTimestamp AS DATE) = '{forecast_date}'"
+            f"AND CAST(DeliveryStart AS DATETIME) BETWEEN '{start_date_str}' AND "
+            f"'{end_date_str}'"
+            f"AND CAST(DeliveryEnd AS DATETIME) BETWEEN '{start_date_str}' AND "
+            f"'{end_date_str}'"
+        )
+
+        # Query db
+        self.open_connection()
+        df = self.query_db(query)
+        self.close_connection()
+
+        # Assert data
+        if df.empty:
+            raise ValueError("No volume forecast or custom bid limit data found for "
+                             "user-defined inputs!")
+
+        # Sort data
+        sort_cols = ["ClientId", "InsertionTimestamp", "DeliveryStart"]
+        sort_cols = [c for c in sort_cols if c in df.columns]
+        if len(sort_cols) > 0:
+            df.sort_values(
+                by=sort_cols,
+                axis=0,
+                ascending=True,
+                inplace=True,
+                ignore_index=True,
+            )
+
+        # Localize, convert and set timezone-(un)aware datetimes
+        cols_date = ["DeliveryStart", "DeliveryEnd", "InsertionTimestamp"]
+        for c in cols_date:
+            if c in df.columns:
+                # Convert from datetime to pandas timestamp
+                df[c] = pd.DatetimeIndex(df[c])
+
+                # Convert to timezone-aware dates
+                if c == "InsertionTimestamp":
+                    df[c] = df[c].dt.tz_localize(local_timezone)
+                else:
+                    df[c] = df[c].dt.tz_localize("UTC")
+                    df[c] = df[c].dt.tz_convert(local_timezone)
+
+                if not timezone_aware_dates:
+                    df[c] = df[c].dt.tz_localize(None)
+
+        # Rescale column values
+        df["Volume"] = df["Volume"] / 1000
+        df["VolumeUnit"] = "MWh"
+
+        return df
+
+
 class DetDatabaseDefinitions:
     """A class containing some hard-coded definitions related to the DET database."""
 
@@ -1003,4 +1121,5 @@ class DetDatabaseDefinitions:
         table_name_instruments="[TT].[Instrument]",
         table_name_eex_eod_price="[EEX].[EODPrice]",
         table_name_forecast_customer_volume="[DISP].[ForecastGold]",
+        table_name_forecast_customer_volume_custom_bids="[TRADE].[ClientBid]",
     )
