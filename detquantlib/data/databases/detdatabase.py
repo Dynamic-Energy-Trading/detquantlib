@@ -1054,8 +1054,8 @@ class DetDatabase:
         ]
         query = (
             f"SELECT {columns_str} FROM {table} "
-            f"WHERE ClientId = '{client_id}'"
-            f"AND CAST(InsertionTimestamp AS DATE) = '{forecast_date}'"
+            f"WHERE ClientId = '{client_id}' "
+            f"AND CAST(InsertionTimestamp AS DATE) = '{forecast_date}' "
             f"AND CAST(DeliveryStart AS DATETIME) BETWEEN '{start_date_str}' AND "
             f"'{end_date_str}'"
             f"AND CAST(DeliveryEnd AS DATETIME) BETWEEN '{start_date_str}' AND "
@@ -1104,7 +1104,52 @@ class DetDatabase:
 
         # Rescale column values
         df["Volume"] = df["Volume"] / 1000
-        df["VolumeUnit"] = "MWh"
+
+        # Reset volume units
+        if "VolumeUnit" in df.columns:
+            df["VolumeUnit"] = "MWh"
+
+        return df
+
+    def load_client_id_name_type(
+        self,
+        columns: list = None,
+    ) -> pd.DataFrame:
+        """
+        Loads client overview containing IDs, names and types from DET database.
+
+        Args:
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get all
+                columns
+
+        Returns:
+            Dataframe containing client IDs, names and types
+
+        Raises:
+            ValueError: Raises an error if no clients are found
+        """
+        # Set default column values
+        if columns is None:
+            columns = ["*"]
+
+        # Convert columns from list to string
+        if len(columns) == 1:
+            columns_str = str(columns[0])
+        else:
+            columns_str = f"[{'], ['.join(columns)}]"
+
+        # Create query
+        table = DetDatabaseDefinitions.DEFINITIONS["table_name_client_id_name_type"]
+        query = f"SELECT {columns_str} FROM {table} "
+
+        # Query db
+        self.open_connection()
+        df = self.query_db(query)
+        self.close_connection()
+
+        # Assert data
+        if df.empty:
+            raise ValueError("No clients are found!")
 
         return df
 
@@ -1122,4 +1167,5 @@ class DetDatabaseDefinitions:
         table_name_eex_eod_price="[EEX].[EODPrice]",
         table_name_forecast_customer_volume="[DISP].[ForecastGold]",
         table_name_forecast_customer_volume_custom_bids="[TRADE].[ClientBid]",
+        table_name_client_id_name_type="[META].[Client]",
     )
