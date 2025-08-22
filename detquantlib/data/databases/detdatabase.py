@@ -1031,9 +1031,7 @@ class DetDatabase:
             columns_str = f"[{'], ['.join(columns)}]"
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS[
-            "table_name_customer_day_ahead_auction_bids"
-        ]
+        table = DetDatabaseDefinitions.DEFINITIONS["table_name_customer_day_ahead_auction_bids"]
         query = (
             f"SELECT {columns_str} FROM {table} "
             f"WHERE ClientId='{client_id}' "
