@@ -402,8 +402,7 @@ class DetDatabase:
 
         # Convert end trading date to end delivery date
         if end_trading_date is not None:
-            end_trading_date = pd.Timestamp(end_trading_date).floor("D")
-            end_delivery_date = end_trading_date + relativedelta(days=1)
+            end_trading_date = pd.Timestamp(end_trading_date).floor("D") + relativedelta(days=1)
 
         # Convert end date to UTC and string
         end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(timezone))
@@ -666,10 +665,7 @@ class DetDatabase:
         return commodity_info
 
     def load_account_positions(
-        self,
-        start_trading_date: datetime,
-        end_trading_date: datetime,
-        columns: list = None,
+        self, start_trading_date: datetime, end_trading_date: datetime, columns: list = None
     ) -> pd.DataFrame:
         """
         Loads account positions from the database, over a user-defined range of trading dates.
@@ -697,6 +693,7 @@ class DetDatabase:
             columns_str = f"[{'], ['.join(columns)}]"
 
         # Convert dates from datetime to string
+        end_trading_date = pd.Timestamp(end_trading_date).floor("D") + relativedelta(days=1)
         start_trading_date_str = start_trading_date.strftime("%Y-%m-%d")
         end_trading_date_str = end_trading_date.strftime("%Y-%m-%d")
 
@@ -704,8 +701,8 @@ class DetDatabase:
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_account_position"]
         query = (
             f"SELECT {columns_str} FROM {table} "
-            f"WHERE CAST(InsertionTimestamp AS DATE) BETWEEN '{start_trading_date_str}' AND "
-            f"'{end_trading_date_str}'"
+            f"WHERE InsertionTimestamp>='{start_trading_date_str}' "
+            f"AND InsertionTimestamp<'{end_trading_date_str}'"
         )
 
         # Query db
@@ -730,11 +727,7 @@ class DetDatabase:
 
         return df
 
-    def load_instruments(
-        self,
-        identifiers: list,
-        columns: list = None,
-    ) -> pd.DataFrame:
+    def load_instruments(self, identifiers: list, columns: list = None) -> pd.DataFrame:
         """
         Loads instrument data based on identifier (of account positions) from the database.
 
@@ -828,8 +821,8 @@ class DetDatabase:
         query = (
             f"SELECT {columns_str} FROM {table} "
             f"WHERE Product LIKE '{product_code}' "
-            f"AND CAST(TradingDate AS DATE) BETWEEN '{start_trading_date_str}' AND "
-            f"'{end_trading_date_str}'"
+            f"AND TradingDate>='{start_trading_date_str}' "
+            f"AND TradingDate<='{end_trading_date_str}'"
         )
 
         # Query db
@@ -872,7 +865,7 @@ class DetDatabase:
         columns: list = None,
     ) -> pd.DataFrame:
         """
-        Loads customer volume forecasts from DET database.
+        Loads customer volume forecasts from the database.
 
         Args:
             profile: Customer/profile name.
@@ -913,10 +906,8 @@ class DetDatabase:
         start_delivery_date = start_delivery_date.astimezone(ZoneInfo("UTC"))
         start_date_str = start_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
 
-        # Set delivery end time
-        end_delivery_date = end_delivery_date.replace(hour=23, minute=59, second=59)
-
         # Convert end delivery date form local timezone to UTC and string
+        end_delivery_date = pd.Timestamp(end_delivery_date).floor("D") + relativedelta(days=1)
         end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(local_timezone))
         end_delivery_date = end_delivery_date.astimezone(ZoneInfo("UTC"))
         end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
@@ -932,16 +923,16 @@ class DetDatabase:
             columns_str = f"[{'], ['.join(columns)}]"
 
         # Convert dates from datetime to string
-        forecast_date = forecast_date.strftime("%Y-%m-%d")
+        forecast_date_str = forecast_date.strftime("%Y-%m-%d")
 
         # Create query
         table = DetDatabaseDefinitions.DEFINITIONS["table_name_forecast_customer_volume"]
         query = (
             f"SELECT {columns_str} FROM {table} "
-            f"WHERE Profile = '{profile}'"
-            f"AND ForecastDate = '{forecast_date}'"
-            f"AND CAST(Datetime AS DATETIME) BETWEEN '{start_date_str}' AND "
-            f"'{end_date_str}'"
+            f"WHERE Profile='{profile}' "
+            f"AND ForecastDate='{forecast_date_str}' "
+            f"AND Datetime>='{start_date_str}' "
+            f"AND Datetime<'{end_date_str}'"
         )
 
         # Query db
@@ -990,6 +981,174 @@ class DetDatabase:
 
         return df
 
+    def load_customer_day_ahead_auction_bids(
+        self,
+        client_id: str,
+        start_delivery_date: datetime,
+        end_delivery_date: datetime,
+        local_timezone: str,
+        timezone_aware_dates: bool = False,
+        columns: list = None,
+    ) -> pd.DataFrame:
+        """
+        Loads customer day-ahead auction bids (volumes and limit prices) from the database.
+
+        Args:
+            client_id: Client ID
+            start_delivery_date: First delivery date included
+            end_delivery_date: Last delivery date included
+            local_timezone: Local timezone (needed to account for DST switches)
+            timezone_aware_dates: If true, returns all dates as timezone-aware. Otherwise, returns
+                them as timezone-naive
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get all
+                columns
+
+        Returns:
+            Dataframe containing customer day-ahead auction bids
+
+        Raises:
+            ValueError: Raises an error if no data is found for user inputs
+        """
+        # Convert start delivery date from local timezone to UTC and string
+        start_delivery_date = start_delivery_date.replace(tzinfo=ZoneInfo(local_timezone))
+        start_delivery_date = start_delivery_date.astimezone(ZoneInfo("UTC"))
+        start_date_str = start_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Convert end delivery date form local timezone to UTC and string
+        end_delivery_date = pd.Timestamp(end_delivery_date).floor("D") + relativedelta(days=1)
+        end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(local_timezone))
+        end_delivery_date = end_delivery_date.astimezone(ZoneInfo("UTC"))
+        end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Set default column values
+        if columns is None:
+            columns = ["*"]
+
+        # Convert columns from list to string
+        if len(columns) == 1:
+            columns_str = str(columns[0])
+        else:
+            columns_str = f"[{'], ['.join(columns)}]"
+
+        # Create query
+        table = DetDatabaseDefinitions.DEFINITIONS["table_name_customer_day_ahead_auction_bids"]
+        query = (
+            f"SELECT {columns_str} FROM {table} "
+            f"WHERE ClientId='{client_id}' "
+            f"AND DeliveryStart>='{start_date_str}' "
+            f"AND DeliveryStart<'{end_date_str}'"
+        )
+
+        # Query db
+        self.open_connection()
+        df = self.query_db(query)
+        self.close_connection()
+
+        # Assert data
+        if df.empty:
+            raise ValueError("No data found for user-defined inputs.")
+
+        # Sort data
+        sort_cols = ["ClientId", "InsertionTimestamp", "DeliveryStart"]
+        sort_cols = [c for c in sort_cols if c in df.columns]
+        if len(sort_cols) > 0:
+            df.sort_values(
+                by=sort_cols,
+                axis=0,
+                ascending=True,
+                inplace=True,
+                ignore_index=True,
+            )
+
+        # Localize, convert and set timezone-(un)aware datetimes
+        cols_date = ["DeliveryStart", "DeliveryEnd", "InsertionTimestamp"]
+        for c in cols_date:
+            if c in df.columns:
+                # Convert from datetime to pandas timestamp
+                df[c] = pd.DatetimeIndex(df[c])
+
+                # Convert to timezone-aware dates
+                if c == "InsertionTimestamp":
+                    df[c] = df[c].dt.tz_localize(local_timezone)
+                else:
+                    df[c] = df[c].dt.tz_localize("UTC")
+                    df[c] = df[c].dt.tz_convert(local_timezone)
+
+                if not timezone_aware_dates:
+                    df[c] = df[c].dt.tz_localize(None)
+
+        return df
+
+    def load_clients(self, columns: list = None, conditions: str = None) -> pd.DataFrame:
+        """
+        General method to load data from the database's client table.
+
+        Args:
+            columns: Requested database table columns. Set columns=["*"] (i.e. as list) to get
+                all columns.
+            conditions: Optional conditions to add to SQL query. E.g. "WHERE Type='Supplier'".
+
+        Returns:
+            Table data
+        """
+        # Set default column values
+        if columns is None:
+            columns = ["*"]
+
+        # Convert columns from list to string
+        if len(columns) == 1:
+            columns_str = str(columns[0])
+        else:
+            columns_str = f"[{'], ['.join(columns)}]"
+
+        # Create query
+        table = DetDatabaseDefinitions.DEFINITIONS["table_name_client"]
+        query = f"SELECT {columns_str} FROM {table} {conditions}"
+
+        # Query db
+        self.open_connection()
+        df = self.query_db(query)
+        self.close_connection()
+
+        return df
+
+    def get_client_info(self, filter_column: str, filter_value: str, info_columns: list) -> dict:
+        """
+        Finds information related to a specific, user-defined client.
+
+        Args:
+            filter_column: Column used to filter data for one specific client
+            filter_value: Value used to filter data for one specific client
+            info_columns: Columns containing the requested information
+
+        Returns:
+            A dictionary containing the requested information
+
+        Raises:
+            ValueError: Raises an error if match with input filter value is not unique
+            ValueError: Raises an error if the input filter value is not found
+        """
+        # Get client information for user-defined filtering criteria
+        condition = f"WHERE {filter_column}='{filter_value}'"
+        client_info = self.load_clients(columns=info_columns, conditions=condition)
+
+        # Validate response
+        if client_info.shape[0] > 1:
+            raise ValueError(f"More than one match found for {filter_column}={filter_value}.")
+
+        elif client_info.shape[0] == 0:
+            available_values = self.load_clients(columns=[filter_column])
+            available_values_str = ", ".join(f"'{x}'" for x in available_values[filter_column])
+            raise ValueError(
+                f"Value {filter_value} not found in column '{filter_column}'. Available values: "
+                f"{available_values_str}."
+            )
+
+        # Convert dataframe row to dict
+        client_info = client_info.loc[0, :].to_dict()
+
+        return client_info
+
 
 class DetDatabaseDefinitions:
     """A class containing some hard-coded definitions related to the DET database."""
@@ -1003,4 +1162,6 @@ class DetDatabaseDefinitions:
         table_name_instruments="[TT].[Instrument]",
         table_name_eex_eod_price="[EEX].[EODPrice]",
         table_name_forecast_customer_volume="[DISP].[ForecastGold]",
+        table_name_customer_day_ahead_auction_bids="[TRADE].[ClientBid]",
+        table_name_client="[META].[Client]",
     )
