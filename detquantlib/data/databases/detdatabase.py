@@ -402,7 +402,7 @@ class DetDatabase:
 
         # Convert end trading date to end delivery date
         if end_trading_date is not None:
-            end_trading_date = pd.Timestamp(end_trading_date).floor("D") + relativedelta(days=1)
+            end_delivery_date = pd.Timestamp(end_trading_date).floor("D") + relativedelta(days=1)
 
         # Convert end date to UTC and string
         end_delivery_date = end_delivery_date.replace(tzinfo=ZoneInfo(timezone))
