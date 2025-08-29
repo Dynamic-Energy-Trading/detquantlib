@@ -149,7 +149,14 @@ class OutputSet:
             output_items = list()
         self.output_items = output_items
 
-    def add_item(self, data, filename: str, extension: str, sub_path: str = None):
+    def add_item(
+        self,
+        data,
+        filename: str,
+        extension: str,
+        sub_path: str = None,
+        export_options: dict = None,
+    ):
         """
         Creates an OutputItem object and adds it to the OutputSet list.
 
@@ -159,9 +166,16 @@ class OutputSet:
             extension: File extension to be used when exporting the output data
             sub_path: Within the output base directory, indicates the sub-path (if any) of the
                 folder where the output data should be exported
+            export_options: Additional options for the function exporting the output data to a file
         """
         # Create OutputItem object
-        item = OutputItem(data=data, filename=filename, extension=extension, sub_path=sub_path)
+        item = OutputItem(
+            data=data,
+            filename=filename,
+            extension=extension,
+            sub_path=sub_path,
+            export_options=export_options,
+        )
         # Append to OutputSet list
         self.output_items.append(item)
 
