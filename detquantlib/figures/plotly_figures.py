@@ -30,10 +30,7 @@ def set_standard_layout(fig: go.Figure) -> go.Figure:
 
 
 def save_plotly_fig_to_json(
-    fig: go.Figure,
-    filename: str,
-    folder_dir: Path = PathDefinitions.get_outputs_plotly_folder_dir(),
-    standard_layout: bool = True,
+    fig: go.Figure, filename: str, folder_dir: Path = None, standard_layout: bool = True,
 ):
     """
     Saves a plotly figure object to a json file.
@@ -44,6 +41,9 @@ def save_plotly_fig_to_json(
         folder_dir: Folder directory where the json file will be saved
         standard_layout: If true, enforces a standard plotly layout
     """
+    if folder_dir is None:
+        PathDefinitions.get_outputs_plotly_folder_dir()
+
     # Create plotly folder if it doesn't exist yet
     folder_dir.mkdir(parents=True, exist_ok=True)
 
@@ -61,10 +61,7 @@ def save_plotly_fig_to_json(
 
 
 def save_plotly_fig_to_html(
-    fig: go.Figure,
-    filename: str,
-    folder_dir: Path = PathDefinitions.get_outputs_plotly_folder_dir(),
-    standard_layout: bool = True,
+    fig: go.Figure, filename: str, folder_dir: Path = None, standard_layout: bool = True
 ):
     """
     Saves a plotly figure object to an html file.
@@ -75,6 +72,9 @@ def save_plotly_fig_to_html(
         folder_dir: Folder directory where the html file will be saved
         standard_layout: If true, enforces a standard plotly layout
     """
+    if folder_dir is None:
+        folder_dir = PathDefinitions.get_outputs_plotly_folder_dir()
+
     # Create plotly folder if it doesn't exist yet
     folder_dir.mkdir(parents=True, exist_ok=True)
 
@@ -89,9 +89,7 @@ def save_plotly_fig_to_html(
     fig.write_html(file_dir)
 
 
-def show_plotly_fig_json(
-    filename: str, folder_dir: Path = PathDefinitions.get_outputs_plotly_folder_dir()
-):
+def show_plotly_fig_json(filename: str, folder_dir: Path = None):
     """
     Short helper function to display a plotly figure stored in a json file.
 
@@ -99,6 +97,9 @@ def show_plotly_fig_json(
         filename: Name of json file containing the plotly figure
         folder_dir: Folder directory containing the json file
     """
+    if folder_dir is None:
+        PathDefinitions.get_outputs_plotly_folder_dir()
+
     # Get json file directory
     file_dir = folder_dir.joinpath(f"{filename}.json")
 
