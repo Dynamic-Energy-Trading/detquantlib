@@ -30,7 +30,7 @@ def set_standard_layout(fig: go.Figure) -> go.Figure:
 
 
 def save_plotly_fig_to_json(
-    fig: go.Figure, filename: str, folder_dir: Path = None, standard_layout: bool = True,
+    fig: go.Figure, filename: str, folder_dir: Path = None, standard_layout: bool = True
 ):
     """
     Saves a plotly figure object to a json file.
