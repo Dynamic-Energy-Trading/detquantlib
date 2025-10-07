@@ -5,10 +5,8 @@ from pathlib import Path
 import plotly.graph_objects as go
 import plotly.io as pio
 
-
-def get_default_plotly_folder_dir():
-    # Default path to output folder containing plotly figures.
-    return Path.cwd().joinpath("Outputs", "PlotlyFigures")
+# Internal modules
+from detquantlib.outputs.outputs_interface import PathDefinitions
 
 
 def set_standard_layout(fig: go.Figure) -> go.Figure:
@@ -34,7 +32,7 @@ def set_standard_layout(fig: go.Figure) -> go.Figure:
 def save_plotly_fig_to_json(
     fig: go.Figure,
     filename: str,
-    folder_dir: Path = get_default_plotly_folder_dir(),
+    folder_dir: Path = PathDefinitions.get_outputs_plotly_folder_dir(),
     standard_layout: bool = True,
 ):
     """
@@ -65,7 +63,7 @@ def save_plotly_fig_to_json(
 def save_plotly_fig_to_html(
     fig: go.Figure,
     filename: str,
-    folder_dir: Path = get_default_plotly_folder_dir(),
+    folder_dir: Path = PathDefinitions.get_outputs_plotly_folder_dir(),
     standard_layout: bool = True,
 ):
     """
@@ -91,7 +89,9 @@ def save_plotly_fig_to_html(
     fig.write_html(file_dir)
 
 
-def show_plotly_fig_json(filename: str, folder_dir: Path = get_default_plotly_folder_dir()):
+def show_plotly_fig_json(
+    filename: str, folder_dir: Path = PathDefinitions.get_outputs_plotly_folder_dir()
+):
     """
     Short helper function to display a plotly figure stored in a json file.
 

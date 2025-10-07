@@ -1,5 +1,6 @@
 # Python built-in packages
 import json
+import os
 from pathlib import Path
 
 # Third-party packages
@@ -184,20 +185,28 @@ class PathDefinitions:
     """A class containing hard-coded path definitions."""
 
     @staticmethod
-    def outputs_folder():
+    def default_outputs_folder_name():
         return "Outputs"
 
     @staticmethod
-    def outputs_plotly_folder():
+    def outputs_plotly_folder_name():
         return "PlotlyFigures"
+
+    @staticmethod
+    def get_outputs_folder_name():
+        # Get name from environment variable if it exists, otherwise use default name
+        folder_name = os.getenv("OUTPUTS_FOLDER")
+        if folder_name is None:
+            folder_name = PathDefinitions.default_outputs_folder_name()
+        return folder_name
 
     @staticmethod
     def get_outputs_folder_dir():
         # Base directory of the folder containing all model outputs
-        return Path.cwd().joinpath(PathDefinitions.outputs_folder())
+        return Path.cwd().joinpath(PathDefinitions.get_outputs_folder_name())
 
     @staticmethod
     def get_outputs_plotly_folder_dir():
         # Directory of the output folder containing all plotly figures
         base_dir = PathDefinitions.get_outputs_folder_dir()
-        return base_dir.joinpath(PathDefinitions.outputs_plotly_folder())
+        return base_dir.joinpath(PathDefinitions.outputs_plotly_folder_name())
