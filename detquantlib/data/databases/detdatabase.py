@@ -100,6 +100,25 @@ class DetDatabase:
 
         return df
 
+    @staticmethod
+    def get_table_name(def_key: str) -> str:
+        """
+        Gets the name of a database table, according to the following logic:
+            1) First, try to get the table name from the corresponding environment variable.
+            2) If the environment variable is not defined, revert to the default table name.
+
+        Args:
+            def_key: Definitions dictionary key corresponding to the desired table
+
+        Returns:
+            Database table name
+        """
+        definition = DetDatabaseDefinitions.DEFINITIONS[def_key]
+        table = os.getenv(definition["env_variable"])
+        if table is None:
+            table = definition["default_table_name"]
+        return table
+
     def load_entsoe_day_ahead_spot_prices(
         self,
         commodity_name: str,
@@ -211,7 +230,7 @@ class DetDatabase:
         end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS["table_name_entsoe_day_ahead_spot_price"]
+        table = DetDatabase.get_table_name("entsoe_day_ahead_spot_price")
         query = (
             f"SELECT {columns_str} FROM {table} "
             f"WHERE MapCode='{map_code}' "
@@ -410,7 +429,7 @@ class DetDatabase:
         end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS["table_name_entsoe_imbalance_price"]
+        table = DetDatabase.get_table_name("entsoe_imbalance_price")
         query = (
             f"SELECT {columns_str} FROM {table} "
             f"WHERE MapCode='{map_code}' "
@@ -543,7 +562,7 @@ class DetDatabase:
         end_trading_date_str = end_trading_date.strftime("%Y-%m-%d")
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS["table_name_futures_eod_settlement_price"]
+        table = DetDatabase.get_table_name("futures_tt")
         query = (
             f"SELECT {columns_str} FROM {table} "
             f"WHERE CommodityName='{commodity_name}' "
@@ -615,7 +634,7 @@ class DetDatabase:
             columns_str = f"[{'], ['.join(columns)}]"
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS["table_name_commodity"]
+        table = DetDatabase.get_table_name("commodity")
         query = f"SELECT {columns_str} FROM {table} {conditions}"
 
         # Query db
@@ -698,7 +717,7 @@ class DetDatabase:
         end_trading_date_str = end_trading_date.strftime("%Y-%m-%d")
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS["table_name_account_position"]
+        table = DetDatabase.get_table_name("account_position")
         query = (
             f"SELECT {columns_str} FROM {table} "
             f"WHERE InsertionTimestamp>='{start_trading_date_str}' "
@@ -756,7 +775,7 @@ class DetDatabase:
         identifiers_str = ", ".join(f"'{i}'" for i in identifiers)
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS["table_name_instruments"]
+        table = DetDatabase.get_table_name("instrument")
         query = f"SELECT {columns_str} FROM {table} WHERE [id] IN ({identifiers_str})"
 
         # Query db
@@ -817,7 +836,7 @@ class DetDatabase:
         end_trading_date_str = end_trading_date.strftime("%Y-%m-%d")
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS["table_name_eex_eod_price"]
+        table = DetDatabase.get_table_name("futures_eex")
         query = (
             f"SELECT {columns_str} FROM {table} "
             f"WHERE Product LIKE '{product_code}' "
@@ -926,7 +945,7 @@ class DetDatabase:
         forecast_date_str = forecast_date.strftime("%Y-%m-%d")
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS["table_name_forecast_customer_volume"]
+        table = DetDatabase.get_table_name("client_volume_forecast")
         query = (
             f"SELECT {columns_str} FROM {table} "
             f"WHERE Profile='{profile}' "
@@ -1031,7 +1050,7 @@ class DetDatabase:
             columns_str = f"[{'], ['.join(columns)}]"
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS["table_name_customer_day_ahead_auction_bids"]
+        table = DetDatabase.get_table_name("client_day_ahead_auction_bids")
         query = (
             f"SELECT {columns_str} FROM {table} "
             f"WHERE ClientId='{client_id}' "
@@ -1102,7 +1121,7 @@ class DetDatabase:
             columns_str = f"[{'], ['.join(columns)}]"
 
         # Create query
-        table = DetDatabaseDefinitions.DEFINITIONS["table_name_client"]
+        table = DetDatabase.get_table_name("client")
         query = f"SELECT {columns_str} FROM {table} {conditions}"
 
         # Query db
@@ -1154,14 +1173,44 @@ class DetDatabaseDefinitions:
     """A class containing some hard-coded definitions related to the DET database."""
 
     DEFINITIONS = dict(
-        table_name_commodity="[META].[Commodity]",
-        table_name_entsoe_day_ahead_spot_price="[ENTSOE].[DayAheadSpotPrice]",
-        table_name_entsoe_imbalance_price="[ENTSOE].[ImbalancePrice]",
-        table_name_futures_eod_settlement_price="[VW].[EODSettlementPrice]",
-        table_name_account_position="[TT].[AccountPosition]",
-        table_name_instruments="[TT].[Instrument]",
-        table_name_eex_eod_price="[EEX].[EODPrice]",
-        table_name_forecast_customer_volume="[DISP].[ForecastGold]",
-        table_name_customer_day_ahead_auction_bids="[TRADE].[ClientBid]",
-        table_name_client="[META].[Client]",
+        commodity=dict(
+            env_variable="DET_DB_TABLE_COMMODITY",
+            default_table_name="[META].[Commodity]",
+        ),
+        entsoe_day_ahead_spot_price=dict(
+            env_variable="DET_DB_TABLE_ENTSOE_DA",
+            default_table_name="[ENTSOE].[DayAheadSpotPrice]",
+        ),
+        entsoe_imbalance_price=dict(
+            env_variable="DET_DB_TABLE_ENTSOE_IB",
+            default_table_name="[ENTSOE].[ImbalancePrice]",
+        ),
+        futures_tt=dict(
+            env_variable="DET_DB_TABLE_FUTURES_TT",
+            default_table_name="[VW].[EODSettlementPrice]",
+        ),
+        futures_eex=dict(
+            env_variable="DET_DB_TABLE_FUTURES_EEX",
+            default_table_name="[EEX].[EODPrice]",
+        ),
+        account_position=dict(
+            env_variable="DET_DB_TABLE_ACCOUNT_POSITION",
+            default_table_name="[TT].[AccountPosition]",
+        ),
+        instrument=dict(
+            env_variable="DET_DB_TABLE_INSTRUMENT",
+            default_table_name="[TT].[Instrument]",
+        ),
+        client_volume_forecast=dict(
+            env_variable="DET_DB_TABLE_CLIENT_VOLUME_FORECAST",
+            default_table_name="[DISP].[ForecastGold]",
+        ),
+        client_day_ahead_auction_bids=dict(
+            env_variable="DET_DB_TABLE_CLIENT_DA_AUCTION_BIDS",
+            default_table_name="[TRADE].[ClientBid]",
+        ),
+        client=dict(
+            env_variable="DET_DB_TABLE_CLIENT",
+            default_table_name="[META].[Client]",
+        ),
     )
