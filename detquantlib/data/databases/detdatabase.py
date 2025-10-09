@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 # Third-party packages
 import pandas as pd
 from dateutil.relativedelta import *
-from sqlalchemy import create_engine, Engine, text
+from sqlalchemy import Engine, create_engine, text
 
 
 class DetDatabase:
@@ -23,9 +23,6 @@ class DetDatabase:
             engine: Instance of SQLAlchemy engine. If None, the instance is automatically
                 initialized.
             driver: ODBC driver
-
-        Raises:
-            EnvironmentError: Raises an error if environment variables are not defined
         """
         # Only allow object creation if mandatory environment variables exist
         DetDatabase.check_environment_variables()
@@ -35,7 +32,12 @@ class DetDatabase:
 
     @staticmethod
     def check_environment_variables():
-        """Checks if environment variables needed by the class are defined."""
+        """
+        Checks if environment variables needed by the class are defined.
+
+        Raises:
+            EnvironmentError: Raises an error if environment variables are not defined
+        """
         required_env_vars = [
             dict(name="DET_DB_NAME", value=None, description="Database name"),
             dict(name="DET_DB_SERVER", value=None, description="Server name"),
