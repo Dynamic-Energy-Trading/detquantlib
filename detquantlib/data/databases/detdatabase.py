@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 # Third-party packages
 import pandas as pd
 from dateutil.relativedelta import *
-from sqlalchemy import create_engine, Engine
+from sqlalchemy import create_engine, Engine, text
 
 
 class DetDatabase:
@@ -1125,6 +1125,29 @@ class DetDatabase:
         client_info = client_info.loc[0, :].to_dict()
 
         return client_info
+
+    def add_table(self, df: pd.DataFrame, table_name: str, schema: str):
+        """
+        Creates a new database table and populates it with the user-input data.
+
+        Args:
+            df: Data used to populate the database table
+            table_name: Table name
+            schema: Schema
+        """
+        df.to_sql(name=table_name, schema=schema, con=self.engine, if_exists="fail", index=False)
+
+    def remove_table(self, table_name: str, schema: str):
+        """
+        Deletes a database table.
+
+        Args:
+            table_name: Table name
+            schema: Schema
+        """
+        with self.engine.connect() as conn:
+            conn.execute(text(f"DROP TABLE IF EXISTS [{schema}].[{table_name}]"))
+            conn.commit()
 
 
 class DetDatabaseDefinitions:
