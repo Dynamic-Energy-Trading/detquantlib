@@ -1,13 +1,13 @@
 # Python built-in packages
 import os
-import warnings
 from datetime import datetime
+from urllib.parse import quote_plus
 from zoneinfo import ZoneInfo
 
 # Third-party packages
 import pandas as pd
-import pyodbc
 from dateutil.relativedelta import *
+from sqlalchemy import create_engine, Engine
 
 
 class DetDatabase:
@@ -15,36 +15,32 @@ class DetDatabase:
     A class to easily interact with the DET database, including fetching and processing data.
     """
 
-    def __init__(
-        self,
-        connection: pyodbc.Connection = None,
-        driver: str = "{ODBC Driver 18 for SQL Server}",
-    ):
+    def __init__(self, engine: Engine = None, driver: str = "ODBC Driver 18 for SQL Server"):
         """
         Constructor method.
 
         Args:
-            connection: Database connection object. This argument does not have to be passed
-                when creating the object. It can be set after the object has been created, using
-                the open_connection() method.
+            engine: Instance of SQLAlchemy engine. If None, the instance is automatically
+                initialized.
             driver: ODBC driver
 
         Raises:
             EnvironmentError: Raises an error if environment variables are not defined
         """
-        self.connection = connection
-        self.driver = driver
+        # Only allow object creation if mandatory environment variables exist
+        DetDatabase.check_environment_variables()
 
-        # Check if environment variables needed by the class are defined
+        self.driver = driver
+        self.engine = engine if engine is not None else self.initialize_engine()
+
+    @staticmethod
+    def check_environment_variables():
+        """Checks if environment variables needed by the class are defined."""
         required_env_vars = [
-            dict(name="DET_DB_NAME", value=None, description="DET database name"),
-            dict(name="DET_DB_SERVER", value=None, description="DET database server name"),
-            dict(
-                name="DET_DB_USERNAME", value=None, description="Username to connect to database"
-            ),
-            dict(
-                name="DET_DB_PASSWORD", value=None, description="Password to connect to database"
-            ),
+            dict(name="DET_DB_NAME", value=None, description="Database name"),
+            dict(name="DET_DB_SERVER", value=None, description="Server name"),
+            dict(name="DET_DB_USERNAME", value=None, description="Username"),
+            dict(name="DET_DB_PASSWORD", value=None, description="Password"),
         ]
         available_env_vars = os.environ
         for d in required_env_vars:
@@ -57,21 +53,28 @@ class DetDatabase:
                     f"(description: '{d['description']}') not found."
                 )
 
-    def open_connection(self):
-        """Opens a connection to the database."""
+    def initialize_engine(self) -> Engine:
+        """
+        Initializes the SQLAlchemy engine.
+
+        Returns:
+            Instance of SQLAlchemy engine
+        """
         # Create the connection string
         connection_str = (
             f"DRIVER={self.driver};"
             f"SERVER={os.getenv('DET_DB_SERVER')};"
             f"DATABASE={os.getenv('DET_DB_NAME')};"
             f"UID={os.getenv('DET_DB_USERNAME')};"
-            f"PWD={os.getenv('DET_DB_PASSWORD')}"
+            f"PWD={quote_plus(os.getenv('DET_DB_PASSWORD'))}"
         )
-        self.connection = pyodbc.connect(connection_str)
+        url = quote_plus(connection_str)
+        engine = create_engine(f"mssql+pyodbc:///?odbc_connect={url}")
+        return engine
 
-    def close_connection(self):
-        """Closes the connection to the database."""
-        self.connection.close()
+    def terminate_engine(self):
+        """Disconnects the SQLAlchemy engine and releases all underlying resources."""
+        self.engine.dispose()
 
     def query_db(self, query: str) -> pd.DataFrame:
         """
@@ -86,17 +89,12 @@ class DetDatabase:
         Raises:
             Exception: Raises an error if the SQL query fails
         """
-        with warnings.catch_warnings():
-            # Pandas UserWarning returned when using pandas with pyodbc. Disable warning
-            # temporarily for the SQL query.
-            warnings.simplefilter("ignore", category=UserWarning)
-
-            try:
-                df = pd.read_sql(query, self.connection)
-            except Exception as e:
-                # If query fails, close connection before raising the error
-                self.close_connection()
-                raise
+        try:
+            df = pd.read_sql_query(query, con=self.engine)
+        except Exception as e:
+            # If query fails, close connection before raising the error
+            self.terminate_engine()
+            raise
 
         return df
 
@@ -229,7 +227,7 @@ class DetDatabase:
         end_delivery_date = end_delivery_date.astimezone(ZoneInfo("UTC"))
         end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
 
-        # Create query
+        # Query db
         table = DetDatabase.get_table_name("entsoe_day_ahead_spot_price")
         query = (
             f"SELECT {columns_str} FROM {table} "
@@ -237,11 +235,7 @@ class DetDatabase:
             f"AND [DateTime(UTC)]>='{start_date_str}' "
             f"AND [DateTime(UTC)]<'{end_date_str}' "
         )
-
-        # Query db
-        self.open_connection()
         df = self.query_db(query)
-        self.close_connection()
 
         if df.empty:
             raise ValueError("No price data found for user-defined inputs.")
@@ -428,7 +422,7 @@ class DetDatabase:
         end_delivery_date = end_delivery_date.astimezone(ZoneInfo("UTC"))
         end_date_str = end_delivery_date.strftime("%Y-%m-%d %H:%M:%S")
 
-        # Create query
+        # Query db
         table = DetDatabase.get_table_name("entsoe_imbalance_price")
         query = (
             f"SELECT {columns_str} FROM {table} "
@@ -436,11 +430,7 @@ class DetDatabase:
             f"AND [DateTime(UTC)]>='{start_date_str}' "
             f"AND [DateTime(UTC)]<'{end_date_str}' "
         )
-
-        # Query db
-        self.open_connection()
         df = self.query_db(query)
-        self.close_connection()
 
         if df.empty:
             raise ValueError("No price data found for user-defined inputs.")
@@ -561,7 +551,7 @@ class DetDatabase:
         start_trading_date_str = start_trading_date.strftime("%Y-%m-%d")
         end_trading_date_str = end_trading_date.strftime("%Y-%m-%d")
 
-        # Create query
+        # Query db
         table = DetDatabase.get_table_name("futures_tt")
         query = (
             f"SELECT {columns_str} FROM {table} "
@@ -571,11 +561,7 @@ class DetDatabase:
             f"AND Tenor IN {tenors_str} "
             f"AND DeliveryType='{delivery_type}'"
         )
-
-        # Query db
-        self.open_connection()
         df = self.query_db(query)
-        self.close_connection()
 
         if df.empty:
             raise ValueError("No price data found for user-defined inputs.")
@@ -633,14 +619,10 @@ class DetDatabase:
         else:
             columns_str = f"[{'], ['.join(columns)}]"
 
-        # Create query
+        # Query db
         table = DetDatabase.get_table_name("commodity")
         query = f"SELECT {columns_str} FROM {table} {conditions}"
-
-        # Query db
-        self.open_connection()
         df = self.query_db(query)
-        self.close_connection()
 
         return df
 
@@ -716,18 +698,14 @@ class DetDatabase:
         start_trading_date_str = start_trading_date.strftime("%Y-%m-%d")
         end_trading_date_str = end_trading_date.strftime("%Y-%m-%d")
 
-        # Create query
+        # Query db
         table = DetDatabase.get_table_name("account_position")
         query = (
             f"SELECT {columns_str} FROM {table} "
             f"WHERE InsertionTimestamp>='{start_trading_date_str}' "
             f"AND InsertionTimestamp<'{end_trading_date_str}'"
         )
-
-        # Query db
-        self.open_connection()
         df = self.query_db(query)
-        self.close_connection()
 
         # Assert data
         if df.empty:
@@ -774,14 +752,10 @@ class DetDatabase:
         # Convert tenors from list to string
         identifiers_str = ", ".join(f"'{i}'" for i in identifiers)
 
-        # Create query
+        # Query db
         table = DetDatabase.get_table_name("instrument")
         query = f"SELECT {columns_str} FROM {table} WHERE [id] IN ({identifiers_str})"
-
-        # Query db
-        self.open_connection()
         df = self.query_db(query)
-        self.close_connection()
 
         # Assert data
         if df.empty:
@@ -835,7 +809,7 @@ class DetDatabase:
         start_trading_date_str = start_trading_date.strftime("%Y-%m-%d")
         end_trading_date_str = end_trading_date.strftime("%Y-%m-%d")
 
-        # Create query
+        # Query db
         table = DetDatabase.get_table_name("futures_eex")
         query = (
             f"SELECT {columns_str} FROM {table} "
@@ -843,11 +817,7 @@ class DetDatabase:
             f"AND TradingDate>='{start_trading_date_str}' "
             f"AND TradingDate<='{end_trading_date_str}'"
         )
-
-        # Query db
-        self.open_connection()
         df = self.query_db(query)
-        self.close_connection()
 
         # Assert data
         if df.empty:
@@ -944,7 +914,7 @@ class DetDatabase:
         # Convert dates from datetime to string
         forecast_date_str = forecast_date.strftime("%Y-%m-%d")
 
-        # Create query
+        # Query db
         table = DetDatabase.get_table_name("client_volume_forecast")
         query = (
             f"SELECT {columns_str} FROM {table} "
@@ -953,11 +923,7 @@ class DetDatabase:
             f"AND Datetime>='{start_date_str}' "
             f"AND Datetime<'{end_date_str}'"
         )
-
-        # Query db
-        self.open_connection()
         df = self.query_db(query)
-        self.close_connection()
 
         # Assert data
         if df.empty:
@@ -1049,7 +1015,7 @@ class DetDatabase:
         else:
             columns_str = f"[{'], ['.join(columns)}]"
 
-        # Create query
+        # Query db
         table = DetDatabase.get_table_name("client_day_ahead_auction_bids")
         query = (
             f"SELECT {columns_str} FROM {table} "
@@ -1057,11 +1023,7 @@ class DetDatabase:
             f"AND DeliveryStart>='{start_date_str}' "
             f"AND DeliveryStart<'{end_date_str}'"
         )
-
-        # Query db
-        self.open_connection()
         df = self.query_db(query)
-        self.close_connection()
 
         # Assert data
         if df.empty:
@@ -1120,14 +1082,10 @@ class DetDatabase:
         else:
             columns_str = f"[{'], ['.join(columns)}]"
 
-        # Create query
+        # Query db
         table = DetDatabase.get_table_name("client")
         query = f"SELECT {columns_str} FROM {table} {conditions}"
-
-        # Query db
-        self.open_connection()
         df = self.query_db(query)
-        self.close_connection()
 
         return df
 
