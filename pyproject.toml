@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "detquantlib"
-version = "3.10.1"
+version = "3.10.2"
 description = "An internal library containing functions and classes that can be used across Quant models."
 authors = ["DET"]
 readme = "README.md"
@@ -11,14 +11,15 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
+python-dotenv = "^1.1.0"
 paramiko = "^4.0.0"
+pyodbc = "^5.2.0"
+sqlalchemy = "^2.0.43"
+plotly = "^6.3.1"
 numpy = "^2.2.6"
 pandas = "^2.3.3"
-plotly = "^6.3.1"
-python-dotenv = "^1.1.0"
+pyarrow = "^21.0.0"
 scipy = "^1.15.2"
-sqlalchemy = "^2.0.43"
-pyodbc = "^5.2.0"
 
 [tool.poetry.group.dev.dependencies]
 toml = "^0.10.2"
