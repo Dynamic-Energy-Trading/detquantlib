@@ -1,6 +1,6 @@
 # Python built-in packages
 import math
-from datetime import datetime
+from datetime import datetime, time
 from typing import Literal
 
 # Third-party packages
@@ -35,14 +35,18 @@ def convert_delivery_start_date_to_maturity(
     # Make input product string lower case only
     product = product.lower()
 
+    # Set trading date and delivery date to midnight
+    trading_date = datetime.combine(trading_date, time())
+    delivery_start_date = datetime.combine(delivery_start_date, time())
+
     if product == "day":
         maturity = (delivery_start_date - trading_date).days
 
     elif product == "week":
-        maturity = math.ceil((delivery_start_date - trading_date).ceil("D").days / 7)
+        maturity = math.ceil((delivery_start_date - trading_date).days / 7)
 
     elif product == "weekend":
-        maturity = math.ceil((delivery_start_date - trading_date).ceil("D").days / 7)
+        maturity = math.ceil((delivery_start_date - trading_date).days / 7)
 
     elif product == "month":
         maturity = calc_months_diff(
