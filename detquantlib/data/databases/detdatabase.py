@@ -296,14 +296,15 @@ class DetDatabase:
         df_out["CommodityName"] = [commodity_name] * df_in.shape[0]
 
         # Set trading date
-        trading_date = [d - relativedelta(days=1, hour=0) for d in df_in[f"DateTime({timezone})"]]
+        col_date = f"DateTime({timezone})"
+        trading_date = [d.normalize() - relativedelta(days=1) for d in df_in[col_date]]
         df_out["TradingDate"] = trading_date
 
         # Set delivery start date
-        df_out["DeliveryStart"] = df_in[f"DateTime({timezone})"]
+        df_out["DeliveryStart"] = df_in[col_date]
 
         # Set delivery end date
-        delivery_end = [d + relativedelta(hours=1) for d in df_in[f"DateTime({timezone})"]]
+        delivery_end = [d + relativedelta(hours=1) for d in df_in[col_date]]
         df_out["DeliveryEnd"] = delivery_end
 
         # Set tenor
