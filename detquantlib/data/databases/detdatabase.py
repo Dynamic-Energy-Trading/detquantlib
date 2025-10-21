@@ -185,7 +185,13 @@ class DetDatabase:
 
         # Set default column values
         if columns is None:
-            columns = ["DateTime(UTC)", "MapCode", "Price(Currency/MWh)", "Currency"]
+            columns = [
+                "DateTime(UTC)",
+                "ResolutionCode",
+                "MapCode",
+                "Price(Currency/MWh)",
+                "Currency",
+            ]
 
         # Always add delivery date column
         if "DateTime(UTC)" not in columns and columns != ["*"]:
@@ -248,17 +254,21 @@ class DetDatabase:
         )
 
         # Convert date columns to timezone-aware dates
-        cols_date_utc = ["DateTime(UTC)", "UpdateTime(UTC)", "InsertionTimestamp"]
-        for c in cols_date_utc:
+        cols_date = ["DateTime(UTC)", "UpdateTime(UTC)", "InsertionTimestamp"]
+        for c in cols_date:
             if c in df.columns:
                 df[c] = df[c].dt.tz_localize("UTC")
 
         # Add column with delivery date expressed in local timezone
-        df[f"DateTime({timezone})"] = df["DateTime(UTC)"].dt.tz_convert(timezone)
+        col_local_date = f"DateTime({timezone})"
+        cols_date.append(col_local_date)
+        loc = df.columns.get_loc("DateTime(UTC)") + 1
+        df.insert(
+            loc=loc, column=col_local_date, value=df["DateTime(UTC)"].dt.tz_convert(timezone)
+        )
 
         if not timezone_aware_dates:
-            cols_date_all = cols_date_utc + [f"DateTime({timezone})"]
-            for c in cols_date_all:
+            for c in cols_date:
                 if c in df.columns:
                     df[c] = df[c].dt.tz_localize(None)
 
@@ -282,6 +292,9 @@ class DetDatabase:
 
         Returns:
             Processed dataframe containing day-ahead spot prices
+
+        Raises:
+            ValueError: Raises an error if the resolution code is not supported.
         """
         df_in.reset_index(drop=True, inplace=True)
 
@@ -292,14 +305,27 @@ class DetDatabase:
         df_out["CommodityName"] = [commodity_name] * df_in.shape[0]
 
         # Set trading date
-        trading_date = [d - relativedelta(days=1, hour=0) for d in df_in[f"DateTime({timezone})"]]
+        col_date = f"DateTime({timezone})"
+        trading_date = [d.normalize() - relativedelta(days=1) for d in df_in[col_date]]
         df_out["TradingDate"] = trading_date
 
         # Set delivery start date
-        df_out["DeliveryStart"] = df_in[f"DateTime({timezone})"]
+        df_out["DeliveryStart"] = df_in[col_date]
 
         # Set delivery end date
-        delivery_end = [d + relativedelta(hours=1) for d in df_in[f"DateTime({timezone})"]]
+        delivery_end = list()
+        for i in df_in.index:
+            start_date = df_out.loc[i, "DeliveryStart"]
+            offset = df_in.loc[i, "ResolutionCode"]
+            match offset:
+                case "PT60M":
+                    offset = 60
+                case "PT15M":
+                    offset = 15
+                case _:
+                    raise ValueError("Resolution not supported.")
+            end_date = start_date + relativedelta(minutes=offset)
+            delivery_end.append(end_date)
         df_out["DeliveryEnd"] = delivery_end
 
         # Set tenor
@@ -569,13 +595,10 @@ class DetDatabase:
             raise ValueError("No price data found for user-defined inputs.")
 
         # Sort data
-        df.sort_values(
-            by=["TradingDate", "DeliveryStart", "DeliveryEnd"],
-            axis=0,
-            ascending=True,
-            inplace=True,
-            ignore_index=True,
-        )
+        cols_sort = ["TradingDate", "DeliveryStart", "DeliveryEnd"]
+        cols_sort = [c for c in cols_sort if c in df.columns]
+        if len(cols_sort) > 0:
+            df.sort_values(by=cols_sort, axis=0, ascending=True, inplace=True, ignore_index=True)
 
         # Convert dates from datetime.date to pd.Timestamp
         cols_date = ["TradingDate", "DeliveryStart", "DeliveryEnd"]
@@ -794,16 +817,10 @@ class DetDatabase:
         # Set default column values
         if columns is None:
             columns = ["*"]
-        else:
-            # Assert required columns
-            columns = list(
-                set(columns)
-                | {"TradingDate", "Product", "Delivery Start", "Delivery End", "Settlement Price"}
-            )
 
         # Convert columns from list to string
         if len(columns) == 1:
-            columns_str = str(columns[0])
+            columns_str = f"[{columns[0]}]"
         else:
             columns_str = f"[{'], ['.join(columns)}]"
 
@@ -826,13 +843,10 @@ class DetDatabase:
             raise ValueError("No price data found for user-defined inputs.")
 
         # Sort data
-        df.sort_values(
-            by=["TradingDate", "Delivery Start", "Delivery End"],
-            axis=0,
-            ascending=True,
-            inplace=True,
-            ignore_index=True,
-        )
+        cols_sort = ["TradingDate", "Delivery Start", "Delivery End"]
+        cols_sort = [c for c in cols_sort if c in df.columns]
+        if len(cols_sort) > 0:
+            df.sort_values(by=cols_sort, axis=0, ascending=True, inplace=True, ignore_index=True)
 
         # Convert dates from datetime.date to pd.Timestamp
         cols_date = ["TradingDate", "Delivery Start", "Delivery End"]
