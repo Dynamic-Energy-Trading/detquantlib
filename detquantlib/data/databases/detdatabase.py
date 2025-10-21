@@ -588,13 +588,12 @@ class DetDatabase:
             raise ValueError("No price data found for user-defined inputs.")
 
         # Sort data
-        df.sort_values(
-            by=["TradingDate", "DeliveryStart", "DeliveryEnd"],
-            axis=0,
-            ascending=True,
-            inplace=True,
-            ignore_index=True,
-        )
+        cols_sort = ["TradingDate", "DeliveryStart", "DeliveryEnd"]
+        cols_sort = [c for c in cols_sort if c in df.columns]
+        if len(cols_sort) > 0:
+            df.sort_values(
+                by=cols_sort, axis=0, ascending=True, inplace=True, ignore_index=True
+            )
 
         # Convert dates from datetime.date to pd.Timestamp
         cols_date = ["TradingDate", "DeliveryStart", "DeliveryEnd"]
@@ -813,16 +812,10 @@ class DetDatabase:
         # Set default column values
         if columns is None:
             columns = ["*"]
-        else:
-            # Assert required columns
-            columns = list(
-                set(columns)
-                | {"TradingDate", "Product", "Delivery Start", "Delivery End", "Settlement Price"}
-            )
 
         # Convert columns from list to string
         if len(columns) == 1:
-            columns_str = str(columns[0])
+            columns_str = f"[{columns[0]}]"
         else:
             columns_str = f"[{'], ['.join(columns)}]"
 
@@ -845,13 +838,12 @@ class DetDatabase:
             raise ValueError("No price data found for user-defined inputs.")
 
         # Sort data
-        df.sort_values(
-            by=["TradingDate", "Delivery Start", "Delivery End"],
-            axis=0,
-            ascending=True,
-            inplace=True,
-            ignore_index=True,
-        )
+        cols_sort = ["TradingDate", "Delivery Start", "Delivery End"]
+        cols_sort = [c for c in cols_sort if c in df.columns]
+        if len(cols_sort) > 0:
+            df.sort_values(
+                by=cols_sort, axis=0, ascending=True, inplace=True, ignore_index=True
+            )
 
         # Convert dates from datetime.date to pd.Timestamp
         cols_date = ["TradingDate", "Delivery Start", "Delivery End"]
