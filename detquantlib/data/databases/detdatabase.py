@@ -186,7 +186,11 @@ class DetDatabase:
         # Set default column values
         if columns is None:
             columns = [
-                "DateTime(UTC)", "ResolutionCode", "MapCode", "Price(Currency/MWh)", "Currency"
+                "DateTime(UTC)",
+                "ResolutionCode",
+                "MapCode",
+                "Price(Currency/MWh)",
+                "Currency",
             ]
 
         # Always add delivery date column
@@ -594,9 +598,7 @@ class DetDatabase:
         cols_sort = ["TradingDate", "DeliveryStart", "DeliveryEnd"]
         cols_sort = [c for c in cols_sort if c in df.columns]
         if len(cols_sort) > 0:
-            df.sort_values(
-                by=cols_sort, axis=0, ascending=True, inplace=True, ignore_index=True
-            )
+            df.sort_values(by=cols_sort, axis=0, ascending=True, inplace=True, ignore_index=True)
 
         # Convert dates from datetime.date to pd.Timestamp
         cols_date = ["TradingDate", "DeliveryStart", "DeliveryEnd"]
@@ -844,9 +846,7 @@ class DetDatabase:
         cols_sort = ["TradingDate", "Delivery Start", "Delivery End"]
         cols_sort = [c for c in cols_sort if c in df.columns]
         if len(cols_sort) > 0:
-            df.sort_values(
-                by=cols_sort, axis=0, ascending=True, inplace=True, ignore_index=True
-            )
+            df.sort_values(by=cols_sort, axis=0, ascending=True, inplace=True, ignore_index=True)
 
         # Convert dates from datetime.date to pd.Timestamp
         cols_date = ["TradingDate", "Delivery Start", "Delivery End"]
