@@ -288,6 +288,9 @@ class DetDatabase:
 
         Returns:
             Processed dataframe containing day-ahead spot prices
+
+        Raises:
+            ValueError: Raises an error if the resolution code is not supported.
         """
         df_in.reset_index(drop=True, inplace=True)
 
