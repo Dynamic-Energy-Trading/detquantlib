@@ -248,17 +248,21 @@ class DetDatabase:
         )
 
         # Convert date columns to timezone-aware dates
-        cols_date_utc = ["DateTime(UTC)", "UpdateTime(UTC)", "InsertionTimestamp"]
-        for c in cols_date_utc:
+        cols_date = ["DateTime(UTC)", "UpdateTime(UTC)", "InsertionTimestamp"]
+        for c in cols_date:
             if c in df.columns:
                 df[c] = df[c].dt.tz_localize("UTC")
 
         # Add column with delivery date expressed in local timezone
-        df[f"DateTime({timezone})"] = df["DateTime(UTC)"].dt.tz_convert(timezone)
+        col_local_date = f"DateTime({timezone})"
+        cols_date.append(col_local_date)
+        loc = df.columns.get_loc("DateTime(UTC)") + 1
+        df.insert(
+            loc=loc, column=col_local_date, value=df["DateTime(UTC)"].dt.tz_convert(timezone)
+        )
 
         if not timezone_aware_dates:
-            cols_date_all = cols_date_utc + [f"DateTime({timezone})"]
-            for c in cols_date_all:
+            for c in cols_date:
                 if c in df.columns:
                     df[c] = df[c].dt.tz_localize(None)
 
