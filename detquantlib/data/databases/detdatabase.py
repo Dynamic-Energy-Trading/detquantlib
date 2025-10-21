@@ -185,7 +185,9 @@ class DetDatabase:
 
         # Set default column values
         if columns is None:
-            columns = ["DateTime(UTC)", "MapCode", "Price(Currency/MWh)", "Currency"]
+            columns = [
+                "DateTime(UTC)", "ResolutionCode", "MapCode", "Price(Currency/MWh)", "Currency"
+            ]
 
         # Always add delivery date column
         if "DateTime(UTC)" not in columns and columns != ["*"]:
@@ -304,7 +306,19 @@ class DetDatabase:
         df_out["DeliveryStart"] = df_in[col_date]
 
         # Set delivery end date
-        delivery_end = [d + relativedelta(hours=1) for d in df_in[col_date]]
+        delivery_end = list()
+        for i in df_in.index:
+            start_date = df_out.loc[i, "DeliveryStart"]
+            offset = df_in.loc[i, "ResolutionCode"]
+            match offset:
+                case "PT60M":
+                    offset = 60
+                case "PT15M":
+                    offset = 15
+                case _:
+                    raise ValueError("Resolution not supported.")
+            end_date = start_date + relativedelta(minutes=offset)
+            delivery_end.append(end_date)
         df_out["DeliveryEnd"] = delivery_end
 
         # Set tenor
