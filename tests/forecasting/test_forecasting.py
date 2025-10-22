@@ -24,7 +24,7 @@ def test_forecast_knife_strategy_timezone_naive():
     expected = np.load(DATA_DIR.joinpath("forecast_knife_strategy_out.npy"))
 
     # Call function
-    actual = forecast_knife_strategy(dates=dates, values=values)
+    actual = forecast_knife_strategy(dates, values)
 
     # Assert
     np.testing.assert_array_equal(actual, expected)
@@ -42,7 +42,7 @@ def test_forecast_knife_strategy_timezone_aware():
     expected = np.load(DATA_DIR.joinpath("forecast_knife_strategy_out.npy"))
 
     # Call function
-    actual = forecast_knife_strategy(dates=dates, values=values)
+    actual = forecast_knife_strategy(dates, values)
 
     # Assert
     np.testing.assert_array_equal(actual, expected)
