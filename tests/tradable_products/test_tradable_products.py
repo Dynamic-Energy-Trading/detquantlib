@@ -99,15 +99,15 @@ def test_convert_delivery_start_date_to_maturity_day():
 
 
 def test_convert_maturity_to_delivery_start_date_year():
-    trading_date = datetime(2025, 10, 26)
-    delivery_start_date = datetime(2025, 10, 26)
+    trading_date = datetime(2025, 10, 22)
+    delivery_start_date = datetime(2025, 1, 1)
     maturity = 0
     res = convert_maturity_to_delivery_start_date(trading_date, maturity, "year")
     assert res == delivery_start_date
 
     trading_date = datetime(2025, 10, 22)
     delivery_start_date = datetime(2027, 1, 1)
-    maturity = 436
+    maturity = 2
     res = convert_maturity_to_delivery_start_date(trading_date, maturity, "year")
     assert res == delivery_start_date
 
