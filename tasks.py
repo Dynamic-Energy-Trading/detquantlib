@@ -41,7 +41,7 @@ def test(c, coverage_report=False):
         coverage_report: If true, produces a coverage report as well.
     """
     options = f"--cov-report term-missing --cov={SOURCE_DIR}" if coverage_report else ""
-    _run(c, f"poetry run pytest {TEST_DIR} --verbose --capture=no {options}")
+    _run(c, f"poetry run pytest {TEST_DIR} --verbose {options}")
 
 
 @task()
