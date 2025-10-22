@@ -1,15 +1,32 @@
+# Python built-in packages
 from datetime import datetime
+
+# Third-party packages
 import numpy as np
 import pandas as pd
 
 
 def forecast_knife_strategy(
-    dates: list[datetime] | list[pd.Timestamp] | pd.DatetimeIndex,
-    values: list | np.ndarray
-):
-    t1 = datetime.now()
-    print(t1)
+    dates: list[datetime] | list[pd.Timestamp] | pd.DatetimeIndex, values: list | np.ndarray
+) -> np.ndarray:
+    """
+    Generates a forecast using the knife strategy (i.e. random walk).
 
+    The knife strategy works as follows:
+    - Set the forecasted value at time t equal to the observed value on the most recent
+        previous date that has the same time (hour, minute, and second) and same day type
+        (Mon-Fri, Sat, or Sun).
+    - If there is no previous date with matching time and day type (i.e. very first observation
+        for a given time and day type), the strategy sets the forecasted value at time t equal
+        to the observed value at time t.
+
+    Args:
+        dates: Delivery dates
+        values: Observed values
+
+    Returns:
+        Forecasted values
+    """
     # Make sure input dates are stored as pd.DatetimeIndex and values as np.array
     dates = pd.DatetimeIndex(dates)
     values = np.array(values)
@@ -26,6 +43,12 @@ def forecast_knife_strategy(
     day_types[weekdays == 5] = 2
     day_types[weekdays == 6] = 3
 
+    # Get forecasted values
+    # Note: The logic below has been designed to optimize code speed, and works as follows:
+    # - 1. Get all the unique pairs of time and day type in the input dataset.
+    # - 2. For each pair:
+    #   - 2.1. Get all the corresponding observed data.
+    #   - 2.2. Set the forecast as: data[0], data[0], data[1], data[2], ..., data[N-1]
     fc_values = np.zeros_like(values)
     pairs = np.column_stack([hours, minutes, seconds, day_types])
     for hh, mm, ss, dt in np.unique(pairs, axis=0):
@@ -33,76 +56,4 @@ def forecast_knife_strategy(
         i_values = values[idx]
         fc_values[idx] = np.insert(i_values[:-1], 0, i_values[0])
 
-    t2 = datetime.now()
-    print(t2)
-    print(t2 - t1)
-    return fc_values
-
-
-def forecast_knife_strategy1(
-    dates: list[datetime] | list[pd.Timestamp] | pd.DatetimeIndex,
-    values: list | np.ndarray
-):
-    t1 = datetime.now()
-    print(t1)
-
-    # Make sure input dates are stored as pd.DatetimeIndex and values as np.array
-    dates = pd.DatetimeIndex(dates)
-    values = np.array(values)
-
-    # Get times
-    seconds_since_midnight = dates.hour * 3600 + dates.minute * 60 + dates.second
-
-    # hours = dates.hour
-    # minutes = dates.minute
-    # times = dates.time
-
-    # Get weekday types (1 = Mon-Fri, 2 = Sat, 3 = Sun)
-    weekdays = dates.weekday
-    day_types = np.zeros_like(weekdays)
-    day_types[weekdays < 5] = 1
-    day_types[weekdays == 5] = 2
-    day_types[weekdays == 6] = 3
-
-    fc_values = np.zeros_like(values)
-    pairs = np.column_stack([seconds_since_midnight, day_types])
-    for sec, dt in np.unique(pairs, axis=0):
-        idx = (seconds_since_midnight == sec) & (day_types == dt)
-        i_values = values[idx]
-        fc_values[idx] = np.insert(i_values[:-1], 0, i_values[0])
-
-    t2 = datetime.now()
-    print(t2)
-    print(t2 - t1)
-    return fc_values
-
-
-def forecast_knife_strategy2(
-    dates: list[datetime] | list[pd.Timestamp] | pd.DatetimeIndex,
-    values: list | np.ndarray
-):
-    t1 = datetime.now()
-    print(t1)
-
-    times = dates.time
-    weekdays = dates.weekday
-
-    fc_values = np.zeros_like(values)
-    for count, d in enumerate(dates):
-        if weekdays[count] < 5:  # Weekday (Mon-Fri)
-            idx = (dates < d) & (weekdays < 5) & (times == times[count])
-        elif weekdays[count] == 5:  # Saturday
-            idx = (dates < d) & (weekdays == 5) & (times == times[count])
-        else:  # Sunday
-            idx = (dates < d) & (weekdays == 6) & (times == times[count])
-
-        prev_values = values[idx]
-        if len(prev_values) > 0:
-            fc_values[count] = prev_values[-1]
-        else:
-            fc_values[count] = values[count]
-
-    t2 = datetime.now()
-    print(t2)
-    print(t2 - t1)
     return fc_values
