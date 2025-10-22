@@ -37,6 +37,10 @@ md-toc = "^9.0.0"
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"] # Tells pytest to look for tests only under the tests/ folder
+pythonpath = ["."] # Adds project root (.) to sys.path, so import detquantlib works anywhere
+
 [tool.isort]
 multi_line_output = 3
 include_trailing_comma = true
