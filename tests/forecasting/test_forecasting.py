@@ -7,9 +7,6 @@ Important notes:
 # Python built-in packages
 from pathlib import Path
 
-# Third-party packages
-import pytest
-
 # Internal modules
 from detquantlib.forecasting import *
 
