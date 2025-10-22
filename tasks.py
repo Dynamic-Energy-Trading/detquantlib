@@ -5,21 +5,23 @@ The tasks are defined with the Invoke package. In the terminal, execute 'inv --l
 on using Invoke.
 """
 
+# Python built-in packages
 import pathlib
 import platform
 import subprocess
 
+# Third-party packages
 from invoke import task
 from invoke.context import Context
 from invoke.runners import Result
 
 # Project related paths
 ROOT_DIR = pathlib.Path(__file__).parent
-SOURCE_DIR = ROOT_DIR.joinpath("detquantlib/")
-TEST_DIR = ROOT_DIR.joinpath("tests/")
+SOURCE_DIR = ROOT_DIR.joinpath("detquantlib")
+TEST_DIR = ROOT_DIR.joinpath("tests")
 TASKS_DIR = ROOT_DIR.joinpath("tasks.py")
 README_DIR = ROOT_DIR.joinpath("README.md")
-PYTHON_TARGETS = [SOURCE_DIR, TEST_DIR, TASKS_DIR]  # directories containing .py files
+PYTHON_TARGETS = [SOURCE_DIR, TEST_DIR, TASKS_DIR]  # paths containing .py files
 PYTHON_TARGETS_STR = " ".join([str(p) for p in PYTHON_TARGETS])
 
 
@@ -31,16 +33,14 @@ def _run(c: Context, command: str) -> Result:
 def test(c, coverage_report=False):
     # type: (Context, bool) -> None
     """
-    Run tests with pytest.
+    Runs tests with pytest.
 
     Args:
         c: Invoke Context object. Note that this argument does not need to be passed when calling
             the task through the CLI because Invoke does it automatically.
         coverage_report: If true, produces a coverage report as well.
     """
-    options = (
-        f"--cov-report term-missing " f"--cov={SOURCE_DIR} {TEST_DIR}" if coverage_report else ""
-    )
+    options = f"--cov-report term-missing --cov={SOURCE_DIR}" if coverage_report else ""
     _run(c, f"poetry run pytest {TEST_DIR} --verbose {options}")
 
 
@@ -48,7 +48,7 @@ def test(c, coverage_report=False):
 def run_lint_imports(c, check=False):
     # type: (Context, bool) -> None
     """
-    Run linters on the imports section.
+    Runs linters on the imports section.
 
     Args:
         c: Invoke Context object. Note that this argument does not need to be passed when calling
@@ -66,7 +66,7 @@ def run_lint_imports(c, check=False):
 def run_lint_docstrings(c):
     # type: (Context) -> None
     """
-    Run linters on the docstrings descriptions.
+    Runs linters on the docstrings descriptions.
 
     Args:
         c: Invoke Context object. Note that this argument does not need to be passed when calling
@@ -80,7 +80,7 @@ def run_lint_docstrings(c):
 def run_lint_code(c, check=False):
     # type: (Context, bool) -> None
     """
-    Run linters on the main code.
+    Runs linters on the main code.
 
     Args:
         c: Invoke Context object. Note that this argument does not need to be passed when calling
@@ -124,7 +124,7 @@ def run_readme_toc(c):
 def run_lint_readme(c, check=False):
     # type: (Context, bool) -> None
     """
-    Run linters on the markdown file README.md.
+    Runs linters on the markdown file README.md.
 
     Args:
         c: Invoke Context object. Note that this argument does not need to be passed when calling
@@ -149,7 +149,7 @@ def run_lint_readme(c, check=False):
 def lint(c, check=False, type_="all"):
     # type: (Context, bool, str) -> None
     """
-    Run linters.
+    Runs linters.
 
     Args:
         c: Invoke Context object. Note that this argument does not need to be passed when calling

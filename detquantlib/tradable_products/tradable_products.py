@@ -29,7 +29,6 @@ def convert_delivery_start_date_to_maturity(
         Product maturity
 
     Raises:
-        ValueError: Raises an error when the delivery start date is older than the trading date
         ValueError: Raises an error when the input product type is not recognized
     """
     # Make input product string lower case only
