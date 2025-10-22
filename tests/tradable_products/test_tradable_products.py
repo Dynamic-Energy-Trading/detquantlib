@@ -8,7 +8,10 @@ Important notes:
 from datetime import datetime
 
 # Internal modules
-from detquantlib.tradable_products import convert_delivery_start_date_to_maturity, convert_maturity_to_delivery_start_date
+from detquantlib.tradable_products import (
+    convert_delivery_start_date_to_maturity,
+    convert_maturity_to_delivery_start_date,
+)
 
 
 def test_convert_delivery_start_date_to_maturity_year():
